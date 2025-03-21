@@ -232,13 +232,13 @@ return {
   -- Markdown preview
   {
     "iamcco/markdown-preview.nvim",
+    build = "cd app && npm install",
+    ft = { "markdown" },
     cmd = { "MarkdownPreview", "MarkdownPreviewStop" },
-    build = function() vim.fn["mkdp#util#install"]() end,
     init = function()
       vim.g.mkdp_auto_close = 1
       vim.g.mkdp_refresh_slow = 1
     end,
-    ft = { "markdown" },
   },
 
   -- Markdown support
@@ -271,4 +271,5 @@ return {
     "ibhagwan/fzf-lua",
     dependencies = { "nvim-tree/nvim-web-devicons" },
   },
+
 }

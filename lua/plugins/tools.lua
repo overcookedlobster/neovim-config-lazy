@@ -333,45 +333,4 @@ return {
     lazy = true,
   },
 
-  -- Filetype extension - Additional filetype detection
-  {
-    "nathom/filetype.nvim",
-    -- enabled = false,  -- Disable the plugin
-    lazy = false,
-    priority = 100,
-    config = function()
-      require("filetype").setup({
-        overrides = {
-          extensions = {
-            -- SystemVerilog
-            sv = "systemverilog",
-            svh = "systemverilog",
-
-            -- Lilypond
-            ly = "lilypond",
-
-            -- LaTeX extensions
-            -- lytex = "latex",
-            -- ankitex = "latex",
-
-            -- Other formats
-            m3u = "sh",
-            mplstyle = "yaml",
-            vifm = "vim",
-            sqlite = "sqlite",
-            gpg = "gpg",
-          },
-          -- Add filetype detection by filename
-          filenames = {
-            [".svls.toml"] = "toml",
-          },
-          -- IMPORTANT: Add this section to properly handle .tex files
-          complex = {
-            -- Let Vim's built-in filetype detection handle .tex files
-            ["*.tex"] = "tex"
-          },
-        },
-      })
-    end,
-  },
 }
