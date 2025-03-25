@@ -60,7 +60,7 @@ return {
           autocomplete = false, -- Disable automatic popup globally
         },
         experimental = {
-          ghost_text = false,
+          ghost_text = true,
         },
       })
 

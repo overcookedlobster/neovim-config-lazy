@@ -1,13 +1,4 @@
--- At the beginning of the file
-print("Loading SystemVerilog snippets")
-
--- After loading each file
-print("Loaded " .. (non_syn and #non_syn or 0) .. " non-synthesizable snippets")
-print("Loaded " .. (syn and #syn or 0) .. " synthesizable snippets")
-print("Loaded " .. (uvm and #uvm or 0) .. " UVM snippets")
-
--- Before returning
-print("Returning " .. #snippets .. " total SystemVerilog snippets")local ls = require("luasnip")
+local ls = require("luasnip")
 
 -- Define the shorthand functions
 local s = ls.snippet

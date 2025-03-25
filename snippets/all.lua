@@ -128,4 +128,22 @@ return {
       i(nil, "License"),
     }),
   })),
+  -- Parentheses with visual selection
+  s({trig = "(", snippetType = "autosnippet"}, fmt("({})", {
+    d(1, get_visual),
+  })),
+
+  -- Curly braces with visual selection
+  s({trig = "{", snippetType = "autosnippet"}, fmt("{{{}}}", {
+    d(1, get_visual),
+  })),
+  -- Square brackets with visual selection
+  s({trig = "[", snippetType = "autosnippet"}, fmt("[{}]", {
+    d(1, get_visual),
+  })),
+
+  -- Double quotes with visual selection
+  s({trig = "\"", snippetType = "autosnippet"}, fmt("\"{}\"", {
+    d(1, get_visual),
+  })),
 }
