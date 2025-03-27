@@ -146,4 +146,8 @@ return {
   s({trig = "\"", snippetType = "autosnippet"}, fmt("\"{}\"", {
     d(1, get_visual),
   })),
+
+  s({trig = "\'"}, fmt("\'{}\'",{
+    d(1, get_visual)
+  })),
 }
