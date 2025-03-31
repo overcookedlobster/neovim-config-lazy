@@ -279,7 +279,7 @@ return {
     opts = {
       -- add any opts here
       -- for example
-      provider = "claude",
+      provider = "xai",
       openai = {
         endpoint = "https://api.openai.com/v1",
         model = "gpt-4o", -- your desired model (or use gpt-4o, etc.)
@@ -288,6 +288,28 @@ return {
         max_completion_tokens = 8192, -- Increase this to include reasoning tokens (for reasoning models)
         reasoning_effort = "medium", -- low|medium|high, only used for reasoning models
       },
+      vendors = {
+        xai = {
+          __inherited_from = 'openai',
+          endpoint = "https://api.x.ai/v1",
+          model = "grok-beta",
+          api_key_name = "XAI_API_KEY",
+          timeout = 50000,
+          temperature = 0,
+          max_completion_tokens = 16384,
+          reasoning_effort = "high",
+        },
+      },
+      -- MCPHub integration
+      system_prompt = function()
+        local hub = require("mcphub").get_hub_instance()
+        return hub:get_active_servers_prompt()
+      end,
+      custom_tools = function()
+        return {
+          require("mcphub.extensions.avante").mcp_tool(),
+        }
+      end,
     },
     -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
     build = "make",
@@ -329,35 +351,37 @@ return {
         },
         ft = { "markdown", "Avante" },
       },
-    },
-  },
-  {
-    "ravitemer/mcphub.nvim",
-    dependencies = {
-        "nvim-lua/plenary.nvim",  -- Required for Job and HTTP requests
-    },
-    -- cmd = "MCPHub", -- lazily start the hub when `MCPHub` is called
-    build = "npm install -g mcp-hub@latest", -- Installs required mcp-hub npm module
-    config = function()
-        require("mcphub").setup({
+      {
+        "ravitemer/mcphub.nvim",
+        dependencies = {
+          "nvim-lua/plenary.nvim",  -- Required for Job and HTTP requests
+        },
+        build = "npm install -g mcp-hub@latest", -- Installs required mcp-hub npm module
+        event = "VeryLazy", -- Ensure it loads before avante.nvim
+        config = function()
+          require("mcphub").setup({
             -- Required options
             port = 3000,  -- Port for MCP Hub server
             config = vim.fn.expand("~/mcpservers.json"),  -- Absolute path to config file
 
             -- Optional options
             on_ready = function(hub)
-                -- Called when hub is ready
+              -- Called when hub is ready
+              vim.notify("MCPHub is ready!", vim.log.levels.INFO)
             end,
             on_error = function(err)
-                -- Called on errors
+              -- Called on errors
+              vim.notify("MCPHub error: " .. err, vim.log.levels.ERROR)
             end,
             log = {
-                level = vim.log.levels.WARN,
-                to_file = false,
-                file_path = nil,
-                prefix = "MCPHub"
+              level = vim.log.levels.WARN,
+              to_file = true,
+              file_path = vim.fn.expand("~/mcphub.log"),
+              prefix = "MCPHub"
             },
-        })
-    end
+          })
+        end
+      },
+    },
   },
 }
