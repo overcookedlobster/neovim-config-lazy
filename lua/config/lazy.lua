@@ -35,6 +35,8 @@ require("lazy").setup({
     { import = "plugins.lsp" },    -- LSP configurations
     { import = "plugins.tex" },    -- LaTeX tools
     { import = "plugins.tools" },  -- Utilities and tools
+    { import = "plugins.filetree" }, -- File explorer
+    { import = "plugins.avante_resize" }, -- Avante resize keybindings
   },
   defaults = {
     lazy = false,                  -- Load plugins on startup by default

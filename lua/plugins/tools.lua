@@ -30,6 +30,9 @@ return {
           xai = {
             api_key = os.getenv "XAI_API_KEY",
           },
+          gemini = {
+            api_key = os.getenv "GEMINI_API_KEY",
+          },
           nvidia = {
             api_key = os.getenv "NVIDIA_API_KEY",
           },

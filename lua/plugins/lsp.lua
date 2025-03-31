@@ -253,56 +253,10 @@ return {
         end
       })
 
--- Replace the ensure_svls_config function with this improved version:
-local function ensure_svls_config()
-  local cwd = vim.fn.getcwd()
-  local config_file = cwd .. '/.svls.toml'
-  if vim.fn.filereadable(config_file) == 0 then
-    local f = io.open(config_file, 'w')
-    if f then
-      f:write([[
-[options]
-# SystemVerilog file extensions
-fileExtensions = ["*.sv", "*.svh", "*.v", "*.vh"]
-
-# Parser settings
-[parser]
-# Enable parsing of all relevant constructs
-parseClassProperties = true
-parseCovergroups = true
-parseAssertions = true
-parseConstraints = true
-
-# Type hierarchy settings
-[typeHierarchy]
-enabled = true
-depth = 3
-
-# Include paths for standard libraries and UVM
-[libraries]
-# Add paths to any standard libraries you use
-paths = [
-    # Example UVM path (uncomment and modify as needed)
-    # "/path/to/uvm/src"
-]
-
-# Preprocessor defines
-[defines]
-# Add any necessary defines here
-values = []
-
-# Workspace settings
-[workspace]
-# Library files or packages to include
-libraryFiles = []
-# Files to exclude
-excludePatterns = ["**/sim/**", "**/tb/**"]
-      ]])
-      f:close()
-      print("Created enhanced SVLS config file at " .. config_file)
-    end
-  end
-end
+      -- Disable automatic creation of svls.toml files
+      local function ensure_svls_config()
+        -- Function intentionally left empty to disable automatic config creation
+      end
 
       -- Automatically create SVLS config
       ensure_svls_config()
