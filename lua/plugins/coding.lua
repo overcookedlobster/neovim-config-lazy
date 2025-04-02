@@ -279,7 +279,7 @@ return {
     opts = {
       -- add any opts here
       -- for example
-      provider = "xai",
+      provider = "gemini_beta",
       openai = {
         endpoint = "https://api.openai.com/v1",
         model = "gpt-4o", -- your desired model (or use gpt-4o, etc.)
@@ -298,6 +298,14 @@ return {
           temperature = 0,
           max_completion_tokens = 16384,
           reasoning_effort = "high",
+        },
+        gemini_beta = {
+          __inherited_from = 'gemini',
+          -- endpoint = "https://generativelanguage.googleapis.com/v1beta/openai",
+          model = "gemini-2.5-pro-exp-03-25",
+          api_key_name = "GEMINI_API_KEY",
+          -- timeout = 50000,
+          -- reasoning_effort = "high",
         },
       },
       -- MCPHub integration
@@ -364,21 +372,21 @@ return {
             port = 3000,  -- Port for MCP Hub server
             config = vim.fn.expand("~/mcpservers.json"),  -- Absolute path to config file
 
-            -- Optional options
-            on_ready = function(hub)
-              -- Called when hub is ready
-              vim.notify("MCPHub is ready!", vim.log.levels.INFO)
-            end,
-            on_error = function(err)
-              -- Called on errors
-              vim.notify("MCPHub error: " .. err, vim.log.levels.ERROR)
-            end,
-            log = {
-              level = vim.log.levels.WARN,
-              to_file = true,
-              file_path = vim.fn.expand("~/mcphub.log"),
-              prefix = "MCPHub"
-            },
+            -- -- Optional options
+            -- on_ready = function(hub)
+            --   -- Called when hub is ready
+            --   vim.notify("MCPHub is ready!", vim.log.levels.INFO)
+            -- end,
+            -- on_error = function(err)
+            --   -- Called on errors
+            --   vim.notify("MCPHub error: " .. err, vim.log.levels.ERROR)
+            -- end,
+            -- log = {
+            --   level = vim.log.levels.WARN,
+            --   to_file = true,
+            --   file_path = vim.fn.expand("~/mcphub.log"),
+            --   prefix = "MCPHub"
+            -- },
           })
         end
       },
