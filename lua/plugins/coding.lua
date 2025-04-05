@@ -279,7 +279,7 @@ return {
     opts = {
       -- add any opts here
       -- for example
-      provider = "gemini_beta",
+      provider = "igpt",
       openai = {
         endpoint = "https://api.openai.com/v1",
         model = "gpt-4o", -- your desired model (or use gpt-4o, etc.)
@@ -306,6 +306,16 @@ return {
           api_key_name = "GEMINI_API_KEY",
           -- timeout = 50000,
           -- reasoning_effort = "high",
+        },
+        igpt = {
+          __inherited_from = 'openai',
+          endpoint = "http://localhost:800/v1",
+          model = "gpt-4o",
+          api_key_name = "IGPT_API_KEY",
+          timeout = 50000,
+          temperature = 0,
+          max_completion_tokens = 16384,
+          reasoning_effort = "high",
         },
       },
       -- MCPHub integration

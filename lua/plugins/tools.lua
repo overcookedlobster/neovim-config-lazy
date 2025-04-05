@@ -54,6 +54,24 @@ return {
               chat = { temperature = 0.7, top_p = 1 },    -- using standard temperature
               command = { temperature = 0.7, top_p = 1 },
             },
+          },
+          igpt = {
+            style = "openai",
+            api_key = os.getenv "IGPT_API_KEY",
+            endpoint = "http://localhost:8000/v1/chat/completions",
+            models = {
+              "gpt-4o",  -- DeepSeek-R1
+            },
+            -- parameters to summarize chat
+            topic = {
+              model = "gpt-4o",
+              params = { max_completion_tokens = 64 },
+            },
+            -- default parameters
+            params = {
+              chat = { temperature = 0.7, top_p = 1 },    -- using standard temperature
+              command = { temperature = 0.7, top_p = 1 },
+            },
           }
         },
 
