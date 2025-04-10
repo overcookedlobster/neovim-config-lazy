@@ -309,7 +309,7 @@ return {
         },
         igpt = {
           __inherited_from = 'openai',
-          endpoint = "http://localhost:800/v1",
+          endpoint = "http://localhost:8000/v1",
           model = "gpt-4o",
           api_key_name = "IGPT_API_KEY",
           timeout = 50000,
