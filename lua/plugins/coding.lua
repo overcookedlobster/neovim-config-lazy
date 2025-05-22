@@ -261,6 +261,62 @@ return {
     "jakemason/ouroboros",  -- File navigation
   },
 
+  -- GitHub Copilot
+  {
+    "zbirenbaum/copilot.lua",
+    cmd = "Copilot",
+    event = "InsertEnter",
+    config = function()
+      require("copilot").setup({
+        panel = {
+          enabled = true,
+          auto_refresh = true,
+          keymap = {
+            jump_prev = "[[",
+            jump_next = "]]",
+            accept = "<CR>",
+            refresh = "gr",
+            open = "<M-CR>"
+          },
+          layout = {
+            position = "bottom", -- | top | left | right
+            ratio = 0.4
+          },
+        },
+        suggestion = {
+          enabled = true,
+          auto_trigger = true,
+          debounce = 75,
+          keymap = {
+            accept = "<M-l>",
+            accept_word = "<M-w>",
+            accept_line = "<M-j>",
+            next = "<M-]>",
+            prev = "<M-[>",
+            dismiss = "<C-]>",
+          },
+        },
+        filetypes = {
+          markdown = true,
+          help = false,
+          gitcommit = false,
+          gitrebase = false,
+          ["."] = false,
+        },
+        copilot_node_command = 'node', -- Node.js version must be > 18
+        server_opts_overrides = {
+          trace = "verbose",
+          settings = {
+            advanced = {
+              listCount = 10,      -- #completions for panel
+              inlineSuggestCount = 3, -- #completions for getCompletions
+            }
+          },
+        }
+      })
+    end,
+  },
+
   -- FZF
   {
     "junegunn/fzf",
@@ -279,7 +335,11 @@ return {
     opts = {
       -- add any opts here
       -- for example
-      provider = "igpt",
+      provider = "copilot",
+      auto_suggestions_provider = "copilot",
+      copilot = {
+        model = "claude-3.7-sonnet"
+      },
       openai = {
         endpoint = "https://api.openai.com/v1",
         model = "gpt-4o", -- your desired model (or use gpt-4o, etc.)

@@ -183,6 +183,24 @@ return {
         },
       })
 
+      -- Explicitly handle automatic server setup
+      local mason_lspconfig = require("mason-lspconfig")
+
+      -- Set up servers from mason-lspconfig
+      mason_lspconfig.setup_handlers({
+        -- Default handler
+        function(server_name)
+          -- Skip servers that are explicitly configured
+          if server_name ~= "lua_ls" and server_name ~= "pyright" and server_name ~= "clangd" and server_name ~= "svls" then
+            lspconfig[server_name].setup({
+              on_attach = on_attach,
+              capabilities = capabilities,
+              handlers = handlers,
+            })
+          end
+        end,
+      })
+
       -- SystemVerilog
       lspconfig.svls.setup({
         capabilities = capabilities,
