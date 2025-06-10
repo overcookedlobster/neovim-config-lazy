@@ -261,61 +261,6 @@ return {
     "jakemason/ouroboros",  -- File navigation
   },
 
-  -- GitHub Copilot
-  {
-    "zbirenbaum/copilot.lua",
-    cmd = "Copilot",
-    event = "InsertEnter",
-    config = function()
-      require("copilot").setup({
-        panel = {
-          enabled = true,
-          auto_refresh = true,
-          keymap = {
-            jump_prev = "[[",
-            jump_next = "]]",
-            accept = "<CR>",
-            refresh = "gr",
-            open = "<M-CR>"
-          },
-          layout = {
-            position = "bottom", -- | top | left | right
-            ratio = 0.4
-          },
-        },
-        suggestion = {
-          enabled = true,
-          auto_trigger = true,
-          debounce = 75,
-          keymap = {
-            accept = "<M-l>",
-            accept_word = "<M-w>",
-            accept_line = "<M-j>",
-            next = "<M-]>",
-            prev = "<M-[>",
-            dismiss = "<C-]>",
-          },
-        },
-        filetypes = {
-          markdown = true,
-          help = false,
-          gitcommit = false,
-          gitrebase = false,
-          ["."] = false,
-        },
-        copilot_node_command = 'node', -- Node.js version must be > 18
-        server_opts_overrides = {
-          trace = "verbose",
-          settings = {
-            advanced = {
-              listCount = 10,      -- #completions for panel
-              inlineSuggestCount = 3, -- #completions for getCompletions
-            }
-          },
-        }
-      })
-    end,
-  },
 
   -- FZF
   {
@@ -328,138 +273,212 @@ return {
     dependencies = { "nvim-tree/nvim-web-devicons" },
   },
   -- Avante
-  {
-    "yetone/avante.nvim",
-    event = "VeryLazy",
-    version = false, -- Never set this value to "*"! Never!
-    opts = {
-      -- add any opts here
-      -- for example
-      provider = "copilot",
-      auto_suggestions_provider = "copilot",
+{
+  "yetone/avante.nvim",
+  event = "VeryLazy",
+  version = false, -- Never set this value to "*"! Never!
+  opts = {
+    -- add any opts here
+    -- for example
+    provider = "copilot",
+    auto_suggestions_provider = "copilot",
+    providers = {
+      claude = {
+        model = "claude-4-sonnet";
+        -- thinking = {
+        --   type = "enabled";
+        --   budget_tokens = 2048;
+        -- }
+      },
       copilot = {
-        model = "claude-3.7-sonnet"
+        model = "claude-3.7-sonnet";
+        -- thinking = {
+        --   type = "enabled";
+        --   budget_tokens = 2048;
+        -- }
       },
       openai = {
         endpoint = "https://api.openai.com/v1",
         model = "gpt-4o", -- your desired model (or use gpt-4o, etc.)
         timeout = 30000, -- Timeout in milliseconds, increase this for reasoning models
-        temperature = 0,
-        max_completion_tokens = 8192, -- Increase this to include reasoning tokens (for reasoning models)
-        reasoning_effort = "medium", -- low|medium|high, only used for reasoning models
-      },
-      vendors = {
-        xai = {
-          __inherited_from = 'openai',
-          endpoint = "https://api.x.ai/v1",
-          model = "grok-beta",
-          api_key_name = "XAI_API_KEY",
-          timeout = 50000,
+        extra_request_body = {
           temperature = 0,
-          max_completion_tokens = 16384,
-          reasoning_effort = "high",
+          max_completion_tokens = 8192, -- Increase this to include reasoning tokens (for reasoning models)
+          reasoning_effort = "medium", -- low|medium|high, only used for reasoning models
         },
-        gemini_beta = {
-          __inherited_from = 'gemini',
-          -- endpoint = "https://generativelanguage.googleapis.com/v1beta/openai",
-          model = "gemini-2.5-pro-exp-03-25",
-          api_key_name = "GEMINI_API_KEY",
-          -- timeout = 50000,
-          -- reasoning_effort = "high",
-        },
-        igpt = {
-          __inherited_from = 'openai',
-          endpoint = "http://localhost:8000/v1",
-          model = "gpt-4o",
-          api_key_name = "IGPT_API_KEY",
-          timeout = 50000,
+      },
+      xai = {
+        __inherited_from = 'openai',
+        endpoint = "https://api.x.ai/v1",
+        model = "grok-3-fast-latest",
+        api_key_name = "XAI_API_KEY",
+        timeout = 50000,
+        extra_request_body = {
           temperature = 0,
           max_completion_tokens = 16384,
           reasoning_effort = "high",
         },
       },
-      -- MCPHub integration
-      system_prompt = function()
-        local hub = require("mcphub").get_hub_instance()
-        return hub:get_active_servers_prompt()
-      end,
-      custom_tools = function()
-        return {
-          require("mcphub.extensions.avante").mcp_tool(),
-        }
+      gemini_beta = {
+        __inherited_from = 'gemini',
+        -- endpoint = "https://generativelanguage.googleapis.com/v1beta/openai",
+        model = "gemini-2.5-pro-exp-03-25",
+        api_key_name = "GEMINI_API_KEY",
+        -- timeout = 50000,
+        -- extra_request_body = {
+        --   reasoning_effort = "high",
+        -- },
+      },
+      igpt = {
+        __inherited_from = 'openai',
+        endpoint = "http://localhost:8000/v1",
+        model = "gpt-4o",
+        api_key_name = "IGPT_API_KEY",
+        timeout = 50000,
+        extra_request_body = {
+          temperature = 0,
+          max_completion_tokens = 16384,
+          reasoning_effort = "high",
+        },
+      },
+    },
+    -- MCPHub integration
+    system_prompt = function()
+      local hub = require("mcphub").get_hub_instance()
+      return hub:get_active_servers_prompt()
+    end,
+    custom_tools = function()
+      return {
+        require("mcphub.extensions.avante").mcp_tool(),
+      }
+    end,
+  },
+  -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
+  build = "make",
+  -- build = "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false" -- for windows
+  dependencies = {
+    "nvim-treesitter/nvim-treesitter",
+    "stevearc/dressing.nvim",
+    "nvim-lua/plenary.nvim",
+    "MunifTanjim/nui.nvim",
+    --- The below dependencies are optional,
+    "echasnovski/mini.pick", -- for file_selector provider mini.pick
+    "nvim-telescope/telescope.nvim", -- for file_selector provider telescope
+    "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
+    "ibhagwan/fzf-lua", -- for file_selector provider fzf
+    "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
+  -- GitHub Copilot
+    {
+      "zbirenbaum/copilot.lua",
+      cmd = "Copilot",
+      event = "InsertEnter",
+      config = function()
+        require("copilot").setup({
+          panel = {
+            enabled = true,
+            auto_refresh = true,
+            keymap = {
+              jump_prev = "[[",
+              jump_next = "]]",
+              accept = "<CR>",
+              refresh = "gr",
+              open = "<M-CR>"
+            },
+            layout = {
+              position = "bottom", -- | top | left | right
+              ratio = 0.4
+            },
+          },
+          suggestion = {
+            enabled = true,
+            auto_trigger = true,
+            debounce = 75,
+            keymap = {
+              accept = "<M-l>",
+              accept_word = "<M-w>",
+              accept_line = "<M-j>",
+              next = "<M-]>",
+              prev = "<M-[>",
+              dismiss = "<C-]>",
+            },
+          },
+          filetypes = {
+            markdown = true,
+            help = false,
+            gitcommit = false,
+            gitrebase = false,
+            ["."] = false,
+          },
+          copilot_node_command = 'node', -- Node.js version must be > 18
+          server_opts_overrides = {
+            trace = "verbose",
+            settings = {
+              advanced = {
+                listCount = 10,      -- #completions for panel
+                inlineSuggestCount = 3, -- #completions for getCompletions
+              }
+            },
+          }
+        })
       end,
     },
-    -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
-    build = "make",
-    -- build = "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false" -- for windows
-    dependencies = {
-      "nvim-treesitter/nvim-treesitter",
-      "stevearc/dressing.nvim",
-      "nvim-lua/plenary.nvim",
-      "MunifTanjim/nui.nvim",
-      --- The below dependencies are optional,
-      "echasnovski/mini.pick", -- for file_selector provider mini.pick
-      "nvim-telescope/telescope.nvim", -- for file_selector provider telescope
-      "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
-      "ibhagwan/fzf-lua", -- for file_selector provider fzf
-      "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
-      "zbirenbaum/copilot.lua", -- for providers='copilot'
-      {
-        -- support for image pasting
-        "HakonHarnes/img-clip.nvim",
-        event = "VeryLazy",
-        opts = {
-          -- recommended settings
-          default = {
-            embed_image_as_base64 = false,
-            prompt_for_file_name = false,
-            drag_and_drop = {
-              insert_mode = true,
-            },
-            -- required for Windows users
-            use_absolute_path = true,
+    {
+      -- support for image pasting
+      "HakonHarnes/img-clip.nvim",
+      event = "VeryLazy", -- next can try "InsertEnter" or "BufReadPost"""
+      opts = {
+        -- recommended settings
+        default = {
+          embed_image_as_base64 = false,
+          prompt_for_file_name = false,
+          drag_and_drop = {
+            insert_mode = true,
           },
+          -- required for Windows users
+          use_absolute_path = true,
         },
       },
-      {
-        -- Make sure to set this up properly if you have lazy=true
-        'MeanderingProgrammer/render-markdown.nvim',
-        opts = {
-          file_types = { "markdown", "Avante" },
-        },
-        ft = { "markdown", "Avante" },
+    },
+    {
+      -- Make sure to set this up properly if you have lazy=true
+      'MeanderingProgrammer/render-markdown.nvim',
+      opts = {
+        file_types = { "markdown", "Avante" },
       },
-      {
-        "ravitemer/mcphub.nvim",
-        dependencies = {
-          "nvim-lua/plenary.nvim",  -- Required for Job and HTTP requests
-        },
-        build = "npm install -g mcp-hub@latest", -- Installs required mcp-hub npm module
-        event = "VeryLazy", -- Ensure it loads before avante.nvim
-        config = function()
-          require("mcphub").setup({
-            -- Required options
-            port = 3000,  -- Port for MCP Hub server
-            config = vim.fn.expand("~/mcpservers.json"),  -- Absolute path to config file
+      ft = { "markdown", "Avante" },
+    },
+    {
+      "ravitemer/mcphub.nvim",
+      dependencies = {
+        "nvim-lua/plenary.nvim",  -- Required for Job and HTTP requests
+      },
+      build = "npm install -g mcp-hub@latest", -- Installs required mcp-hub npm module
+      event = "VeryLazy", -- Ensure it loads before avante.nvim
+      config = function()
+        require("mcphub").setup({
+          -- Required options
+          port = 3000,  -- Port for MCP Hub server
+          config = vim.fn.expand("~/mcpservers.json"),  -- Absolute path to config file
 
-            -- -- Optional options
-            -- on_ready = function(hub)
-            --   -- Called when hub is ready
-            --   vim.notify("MCPHub is ready!", vim.log.levels.INFO)
-            -- end,
-            -- on_error = function(err)
-            --   -- Called on errors
-            --   vim.notify("MCPHub error: " .. err, vim.log.levels.ERROR)
-            -- end,
-            -- log = {
-            --   level = vim.log.levels.WARN,
-            --   to_file = true,
-            --   file_path = vim.fn.expand("~/mcphub.log"),
-            --   prefix = "MCPHub"
-            -- },
-          })
-        end
-      },
+          -- -- Optional options
+          -- on_ready = function(hub)
+          --   -- Called when hub is ready
+          --   vim.notify("MCPHub is ready!", vim.log.levels.INFO)
+          -- end,
+          -- on_error = function(err)
+          --   -- Called on errors
+          --   vim.notify("MCPHub error: " .. err, vim.log.levels.ERROR)
+          -- end,
+          -- log = {
+          --   level = vim.log.levels.WARN,
+          --   to_file = true,
+          --   file_path = vim.fn.expand("~/mcphub.log"),
+          --   prefix = "MCPHub"
+          -- },
+        })
+      end
     },
   },
+},
+
 }

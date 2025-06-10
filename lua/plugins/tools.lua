@@ -14,29 +14,104 @@ return {
       require("parrot").setup({
         providers = {
           anthropic = {
+            name = "anthropic", -- Adding name field to match provider key
             api_key = os.getenv "ANTHROPIC_API_KEY",
             endpoint = "https://api.anthropic.com/v1/messages",
             topic_prompt = "You only respond with 3 to 4 words to summarize the past conversation.",
+            models = {
+              "claude-3-5-sonnet-20240620",
+              "claude-3-opus-20240229",
+              "claude-3-sonnet-20240229",
+              "claude-3-haiku-20240307",
+            },
             topic = {
               model = "claude-3-haiku-20240307",
               params = { max_tokens = 32 },
             },
             params = {
-              chat = { max_tokens = 4096 },
+              chat = { max_tokens = 8192 },
               command = { max_tokens = 4096 },
             },
           },
-          -- ollama = {},
+          -- ollama = {
+          --   endpoint = "http://localhost:11434/api/chat",
+          --   api_key = "",
+          --   models = {
+          --     "llama3.2:latest",
+          --     "mistral:latest",
+          --   },
+          --   topic_prompt = "Summarize the chat above in 3-4 words only.",
+          --   topic = {
+          --     model = "llama3.2:latest",
+          --     params = { max_tokens = 32 },
+          --   },
+          --   params = {
+          --     chat = { temperature = 0.7, top_p = 1 },
+          --     command = { temperature = 0.7, top_p = 1 },
+          --   },
+          -- },
           xai = {
+            name = "xai",
             api_key = os.getenv "XAI_API_KEY",
+            endpoint = "https://api.x.ai/v1/chat/completions",
+            models = {
+              "grok-3-mini-beta",
+              "grok-3-gemma-beta",
+            },
+            topic_prompt = "Summarize our conversation in 3-4 words.",
+            topic = {
+              model = "grok-3-mini-beta",
+              params = { max_tokens = 64 },
+            },
+            params = {
+              chat = { temperature = 0.7, top_p = 1 },
+              command = { temperature = 0.7, top_p = 1 },
+            },
           },
           gemini = {
+            name = "gemini",
             api_key = os.getenv "GEMINI_API_KEY",
+            endpoint = "https://generativelanguage.googleapis.com/v1beta/models/",
+            models = {
+              "gemini-1.5-pro",
+              "gemini-1.5-flash",
+            },
+            topic_prompt = "Summarize our conversation in 3-4 words.",
+            topic = {
+              model = "gemini-1.5-flash",
+              params = { maxOutputTokens = 64 },
+            },
+            params = {
+              chat = { temperature = 0.7, topP = 1, maxOutputTokens = 8192 },
+              command = { temperature = 0.7, topP = 1, maxOutputTokens = 4096 },
+            },
           },
           nvidia = {
-            api_key = os.getenv "NVIDIA_API_KEY",
+            api_key = function()
+              local key = os.getenv("NVIDIA_API_KEY")
+              if not key or key == "" then
+                vim.notify("NVIDIA_API_KEY environment variable is not set", vim.log.levels.WARN)
+                return "YOUR_API_KEY_HERE" -- This will cause the plugin to display a proper error
+              end
+              return key
+            end,
+            endpoint = "https://integrate.api.nvidia.com/v1/chat/completions",
+            models = {
+              "nvidia/llama-3.1-nemotron-51b-instruct",
+              "nvidia/mixtral-8x7b-instruct-v0.1",
+            },
+            topic_prompt = "Summarize our conversation in 3-4 words.",
+            topic = {
+              model = "nvidia/llama-3.1-nemotron-51b-instruct",
+              params = { max_tokens = 64 },
+            },
+            params = {
+              chat = { temperature = 0.7, top_p = 1 },
+              command = { temperature = 0.7, top_p = 1 },
+            },
           },
           deepseek = {
+            name = "deepseek",
             style = "openai",
             api_key = os.getenv "DEEPSEEK_API_KEY",
             endpoint = "https://api.deepseek.com/v1/chat/completions",
@@ -44,32 +119,31 @@ return {
               "deepseek-chat",      -- DeepSeek-V3
               "deepseek-reasoner",  -- DeepSeek-R1
             },
-            -- parameters to summarize chat
+            topic_prompt = "Summarize our conversation in 3-4 words.",
             topic = {
               model = "deepseek-chat",
               params = { max_completion_tokens = 64 },
             },
-            -- default parameters
             params = {
-              chat = { temperature = 0.7, top_p = 1 },    -- using standard temperature
+              chat = { temperature = 0.7, top_p = 1 },
               command = { temperature = 0.7, top_p = 1 },
             },
           },
           igpt = {
+            name = "igpt",
             style = "openai",
             api_key = os.getenv "IGPT_API_KEY",
             endpoint = "http://localhost:8000/v1/chat/completions",
             models = {
-              "gpt-4o",  -- DeepSeek-R1
+              "gpt-4o",
             },
-            -- parameters to summarize chat
+            topic_prompt = "Summarize our conversation in 3-4 words.",
             topic = {
               model = "gpt-4o",
               params = { max_completion_tokens = 64 },
             },
-            -- default parameters
             params = {
-              chat = { temperature = 0.7, top_p = 1 },    -- using standard temperature
+              chat = { temperature = 0.7, top_p = 1 },
               command = { temperature = 0.7, top_p = 1 },
             },
           }
