@@ -62,14 +62,14 @@ return {
   {
     "rcarriga/nvim-notify",
     config = function()
-      require("notify").setup({
+      local notify = require("notify")
+      notify.setup({
         background_colour = "#000000",
         render = "compact",
         top_down = false,
       })
-
       -- Set nvim-notify as the default notification handler
-      vim.notify = require("notify")
+      vim.notify = notify
     end,
   },
 
@@ -120,3 +120,4 @@ return {
     priority = 900,
   },
 }
+
