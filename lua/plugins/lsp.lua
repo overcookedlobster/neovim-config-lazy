@@ -10,6 +10,7 @@ return {
       "hrsh7th/cmp-nvim-lsp",            -- LSP completion
       "williamboman/mason.nvim",          -- Portable package manager for Neovim
       "williamboman/mason-lspconfig.nvim", -- Bridges mason.nvim with lspconfig
+      "WhoIsSethDaniel/mason-tool-installer.nvim", -- Auto-install tools
     },
     config = function()
       -- Set up Mason
@@ -25,6 +26,30 @@ return {
 
       -- We'll initialize mason-lspconfig later after lspconfig is set up
       local mason_lspconfig = require("mason-lspconfig")
+
+      -- Set up mason-tool-installer to automatically install tools
+      require("mason-tool-installer").setup({
+        ensure_installed = {
+          -- Formatters
+          "stylua",        -- Lua formatter
+          "black",         -- Python formatter
+          "isort",         -- Python import sorter
+          "prettier",      -- JavaScript/TypeScript/JSON formatter
+          "prettierd",     -- Faster prettier
+          "clang-format",  -- C/C++ formatter
+
+          -- Linters
+          "flake8",        -- Python linter
+          "eslint",        -- JavaScript/TypeScript linter
+          "luacheck",      -- Lua linter
+
+          -- Note: verilator needs to be installed separately as it's not in Mason
+          -- Install verilator with: sudo apt-get install verilator (Ubuntu/Debian)
+          -- or: brew install verilator (macOS)
+        },
+        auto_update = false,
+        run_on_start = true,
+      })
 
       -- LSP handlers configuration
       local handlers = {
@@ -271,42 +296,106 @@ return {
     end,
   },
 
-  -- Null-LS - Additional diagnostics, formatting, and code actions
+  -- Formatting with conform.nvim (modern alternative to null-ls)
   {
-    "jose-elias-alvarez/null-ls.nvim",
-    dependencies = {
-      "nvim-lua/plenary.nvim",
+    "stevearc/conform.nvim",
+    event = { "BufWritePre" },
+    cmd = { "ConformInfo" },
+    keys = {
+      {
+        "<leader>f",
+        function()
+          require("conform").format({ async = true, lsp_fallback = true })
+        end,
+        desc = "Format buffer",
+      },
     },
     config = function()
-      local null_ls = require("null-ls")
-
-      -- Verilator diagnostic for SystemVerilog
-      local verilator = null_ls.builtins.diagnostics.verilator.with({
-        extra_args = { "--lint-only", "-Wall", "-I" .. (os.getenv("UVM_HOME") or "") .. "/src"},
-        method = null_ls.methods.DIAGNOSTICS_ON_SAVE,
+      require("conform").setup({
+        formatters_by_ft = {
+          lua = { "stylua" },
+          python = { "isort", "black" },
+          c = { "clang-format" },
+          cpp = { "clang-format" },
+          javascript = { { "prettierd", "prettier" } },
+          typescript = { { "prettierd", "prettier" } },
+          json = { { "prettierd", "prettier" } },
+        },
+        format_on_save = {
+          timeout_ms = 500,
+          lsp_fallback = true,
+        },
       })
+    end,
+  },
 
-      local update_in_progress = false
+  -- Linting with nvim-lint (modern alternative to null-ls)
+  {
+    "mfussenegger/nvim-lint",
+    event = { "BufReadPre", "BufNewFile" },
+    config = function()
+      local lint = require("lint")
 
-      null_ls.setup({
-        sources = { verilator },
-        on_attach = function(client, bufnr)
-          local augroup = vim.api.nvim_create_augroup("NullLsDiagnostics", { clear = true })
-          vim.api.nvim_create_autocmd({ "CursorHold", "BufWritePost" }, {
-            group = augroup,
-            buffer = bufnr,
-            callback = function()
-              if not update_in_progress then
-                update_in_progress = true
-                vim.defer_fn(function()
-                  vim.diagnostic.show()
-                  update_in_progress = false
-                end, 100)  -- 100ms delay
-              end
-            end,
-          })
+      -- Configure linters by filetype
+      lint.linters_by_ft = {
+        python = { "flake8" },
+        javascript = { "eslint" },
+        typescript = { "eslint" },
+        lua = { "luacheck" },
+        -- SystemVerilog/Verilog linting with verilator
+        systemverilog = { "verilator" },
+        verilog = { "verilator" },
+      }
+
+      -- Configure verilator linter with custom settings
+      lint.linters.verilator = {
+        cmd = "verilator",
+        stdin = false,
+        args = {
+          "--lint-only",
+          "-Wall",
+          "-I" .. (os.getenv("UVM_HOME") or "") .. "/src",
+          function()
+            return vim.api.nvim_buf_get_name(0)
+          end,
+        },
+        stream = "stderr",
+        ignore_exitcode = true,
+        parser = function(output, bufnr)
+          local diagnostics = {}
+          -- Parse verilator output format
+          for line in output:gmatch("[^\n]+") do
+            local file, line_num, col, severity, message = line:match("([^:]+):(%d+):(%d+): ([^:]+): (.+)")
+            if file and line_num and message then
+              local diagnostic = {
+                lnum = tonumber(line_num) - 1,
+                col = tonumber(col) - 1 or 0,
+                message = message,
+                severity = severity:lower():match("error") and vim.diagnostic.severity.ERROR or
+                          severity:lower():match("warning") and vim.diagnostic.severity.WARN or
+                          vim.diagnostic.severity.INFO,
+                source = "verilator",
+              }
+              table.insert(diagnostics, diagnostic)
+            end
+          end
+          return diagnostics
+        end,
+      }
+
+      -- Auto-lint on various events
+      local lint_augroup = vim.api.nvim_create_augroup("lint", { clear = true })
+      vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
+        group = lint_augroup,
+        callback = function()
+          lint.try_lint()
         end,
       })
+
+      -- Manual lint command
+      vim.api.nvim_create_user_command("Lint", function()
+        lint.try_lint()
+      end, { desc = "Trigger linting for current file" })
     end,
   },
 
