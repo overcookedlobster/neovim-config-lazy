@@ -1,46 +1,51 @@
 -- File: lua/plugins/treesitter.lua
 return {
-  "nvim-treesitter/nvim-treesitter",
-  build = ":TSUpdate",
-  priority = 600,  -- Load before most plugins but after critical ones
-  config = function()
-    require("nvim-treesitter.configs").setup({
-      -- A list of parser names, or "all" (parsers with maintainers)
-      ensure_installed = {
-        "lua",      -- For Neovim config files
-        "vim",      -- For Vim script files
-        "vimdoc",   -- For help files
-        "latex",    -- For LaTeX files
-        "bibtex",   -- For BibTeX files
-        "markdown", -- For documentation
-        "bash",     -- For shell scripts
-        "python",   -- If you work with Python
-      },
+	"nvim-treesitter/nvim-treesitter",
+	build = ":TSUpdate",
+	priority = 600, -- Load before most plugins but after critical ones
+	config = function()
+		-- Use git for more reliable parser installation
+		require("nvim-treesitter.install").prefer_git = true
 
-      -- Install parsers synchronously (only applied to `ensure_installed`)
-      sync_install = false,
+		require("nvim-treesitter.configs").setup({
+			-- A list of parser names, or "all" (parsers with maintainers)
+			ensure_installed = {
+				"lua", -- For Neovim config files
+				"vim", -- For Vim script files
+				"vimdoc", -- For help files
+				"latex", -- For LaTeX files
+				"bibtex", -- For BibTeX files
+				"markdown", -- For documentation
+				"bash", -- For shell scripts
+				"python", -- If you work with Python
+				"verilog", -- For Verilog files
+				"systemverilog", -- For SystemVerilog files (if available)
+			},
 
-      -- Automatically install missing parsers when entering buffer
-      auto_install = true,
+			-- Install parsers synchronously (only applied to `ensure_installed`)
+			sync_install = false,
 
-      -- List of parsers to ignore installing (for "all")
-      ignore_install = {},
+			-- Automatically install missing parsers when entering buffer
+			auto_install = true,
 
-      highlight = {
-        enable = true,  -- Enable TreeSitter highlighting
+			-- List of parsers to ignore installing (for "all")
+			ignore_install = {},
 
-        -- Disable highlighting for specific filetypes
-        disable = {},
+			highlight = {
+				enable = true, -- Enable TreeSitter highlighting
 
-        -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
-        -- Using this option may slow down your editor, and you may see duplicate highlights.
-        additional_vim_regex_highlighting = false,
-      },
+				-- Disable highlighting for specific filetypes
+				disable = {},
 
-      indent = {
-        enable = true,  -- Enable TreeSitter-based indentation
-        disable = {"tex"}, -- Disable TS indentation for tex files as VimTeX handles this better
-      },
-    })
-  end,
+				-- Setting this to true will run `:h syntax` and tree-sitter at the same time.
+				-- Using this option may slow down your editor, and you may see duplicate highlights.
+				additional_vim_regex_highlighting = false,
+			},
+
+			indent = {
+				enable = true, -- Enable TreeSitter-based indentation
+				disable = { "tex" }, -- Disable TS indentation for tex files as VimTeX handles this better
+			},
+		})
+	end,
 }
