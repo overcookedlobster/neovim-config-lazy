@@ -283,6 +283,7 @@ return {
 		"yetone/avante.nvim",
 		event = "VeryLazy",
 		version = false, -- Never set this value to "*"! Never!
+		debug = true,
 		opts = {
 			-- add any opts here
 			-- for example
@@ -316,9 +317,11 @@ return {
 				xai = {
 					__inherited_from = "openai",
 					endpoint = "https://api.x.ai/v1",
-					model = "grok-4-0709",
+					model = "grok-4",
+					model_names = { "grok-4", "grok-3", "grok-3-mini" },
 					api_key_name = "XAI_API_KEY",
 					timeout = 50000,
+					cache = true,
 					extra_request_body = {
 						temperature = 0,
 						max_completion_tokens = 16384,
@@ -338,13 +341,31 @@ return {
 				igpt = {
 					__inherited_from = "openai",
 					endpoint = "http://localhost:8000/v1",
-					model = "gpt-4o",
+					model = "claude-sonnet-4",
+					model_names = { "claude-sonnet-4", "gpt-4o", "gpt-35-turbo" },
+					-- model = "gpt-4o",
 					api_key_name = "IGPT_API_KEY",
 					timeout = 50000,
 					extra_request_body = {
 						temperature = 0,
 						max_completion_tokens = 16384,
-						reasoning_effort = "high",
+						-- max_completion_tokens = 4096,
+						-- reasoning_effort = "high",
+					},
+					-- disable_tools = true,
+				},
+				deepseek = {
+					__inherited_from = "openai",
+					endpoint = "https://api.deepseek.com",
+					model = "deepseek-coder",
+					model_names = { "deepseek-coder", "deepseek-reasoner" },
+					api_key_name = "DEEPSEEK_API_KEY",
+					cache = true,
+					timeout = 50000,
+					extra_request_body = {
+						temperature = 0.5,
+						max_completion_tokens = 10000,
+						reasoning_effort = "medium",
 					},
 				},
 			},

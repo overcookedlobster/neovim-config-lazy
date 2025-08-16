@@ -208,8 +208,10 @@ return {
 						style = "openai",
 						api_key = os.getenv("IGPT_API_KEY"),
 						endpoint = "http://localhost:8000/v1/chat/completions",
+						-- model_endpoint = "http://localhost/v1/models",
 						models = {
 							"gpt-4o",
+							"claude-sonnet-4",
 						},
 						topic_prompt = "Summarize our conversation in 3-4 words.",
 						topic = {
