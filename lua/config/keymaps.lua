@@ -6,12 +6,8 @@ local opts = { noremap = true, silent = true }
 
 -- Helper function for key mapping with description
 local function desc_map(mode, lhs, rhs, description, map_opts)
-  local merged_opts = vim.tbl_extend("force", 
-    opts, 
-    map_opts or {}, 
-    { desc = description }
-  )
-  map(mode, lhs, rhs, merged_opts)
+	local merged_opts = vim.tbl_extend("force", opts, map_opts or {}, { desc = description })
+	map(mode, lhs, rhs, merged_opts)
 end
 
 -- Window navigation
@@ -41,7 +37,7 @@ desc_map("n", "<Leader>to", ":tabedit<Space>", "Tab: Open file", { noremap = tru
 
 -- Quick tab access (1-9)
 for i = 1, 9 do
-  desc_map("n", "<Leader>" .. i, i .. "gt", "Tab: Go to #" .. i)
+	desc_map("n", "<Leader>" .. i, i .. "gt", "Tab: Go to #" .. i)
 end
 
 -- Buffer management
@@ -57,7 +53,7 @@ desc_map("n", "<Leader>bs", ":<C-u>buffers<CR>:buffer<Space>", "Buffer: Switch t
 
 -- Quick buffer access (Alt+1-9)
 for i = 1, 9 do
-  desc_map("n", "<A-" .. i .. ">", ":buffer " .. i .. "<CR>", "Buffer: Go to #" .. i)
+	desc_map("n", "<A-" .. i .. ">", ":buffer " .. i .. "<CR>", "Buffer: Go to #" .. i)
 end
 
 -- File management
@@ -68,16 +64,40 @@ desc_map("n", "<Leader>wa", ":wall<CR>", "Save all")
 desc_map("n", "<Leader>qa", ":qall<CR>", "Quit all")
 
 -- Telescope
-desc_map("n", "<Leader>ff", function() require('telescope.builtin').find_files() end, "Find Files")
-desc_map("n", "<Leader>fg", function() require('telescope.builtin').live_grep() end, "Find Text")
-desc_map("n", "<Leader>fb", function() require('telescope.builtin').buffers() end, "Find Buffers")
-desc_map("n", "<Leader>fh", function() require('telescope.builtin').help_tags() end, "Find Help")
-desc_map("n", "<Leader>fr", function() require('telescope.builtin').oldfiles() end, "Find Recent")
-desc_map("n", "<Leader>fc", function() require('telescope.builtin').current_buffer_fuzzy_find() end, "Find in Current Buffer")
-desc_map("n", "<Leader>fm", function() require('telescope.builtin').marks() end, "Find Marks")
-desc_map("n", "<Leader>fk", function() require('telescope.builtin').keymaps() end, "Find Keymaps")
-desc_map("n", "<Leader>fs", function() require('telescope.builtin').git_status() end, "Find Git Status")
+desc_map("n", "<Leader>ff", function()
+	require("telescope.builtin").find_files()
+end, "Find Files")
+desc_map("n", "<Leader>fg", function()
+	require("telescope.builtin").live_grep()
+end, "Find Text")
+desc_map("n", "<Leader>fb", function()
+	require("telescope.builtin").buffers()
+end, "Find Buffers")
+desc_map("n", "<Leader>fh", function()
+	require("telescope.builtin").help_tags()
+end, "Find Help")
+desc_map("n", "<Leader>fr", function()
+	require("telescope.builtin").oldfiles()
+end, "Find Recent")
+desc_map("n", "<Leader>fc", function()
+	require("telescope.builtin").current_buffer_fuzzy_find()
+end, "Find in Current Buffer")
+desc_map("n", "<Leader>fm", function()
+	require("telescope.builtin").marks()
+end, "Find Marks")
+desc_map("n", "<Leader>fk", function()
+	require("telescope.builtin").keymaps()
+end, "Find Keymaps")
+desc_map("n", "<Leader>fs", function()
+	require("telescope.builtin").git_status()
+end, "Find Git Status")
 
+desc_map("n", "<Leader>ft", function()
+	require("telescope").extensions.file_browser.file_browser()
+end, "File Browser")
+desc_map("n", "<Leader>fp", function()
+	require("telescope").extensions.file_browser.file_browser({ path = vim.fn.expand("%:p:h") })
+end, "File Browser from Current Path")
 -- File explorer with Ranger
 desc_map("n", "<Leader>rr", ":RnvimrToggle<CR>", "Toggle Ranger file explorer")
 
@@ -87,7 +107,7 @@ desc_map("n", "<Leader>m", ":MarkdownPreview<CR>", "Markdown preview")
 -- Reload config
 desc_map("n", "<Leader>re", ":ReloadConfig<CR>", "Reload configuration")
 
--- Yank message history 
+-- Yank message history
 desc_map("n", "<leader>ym", [[:redir @+ | :message | :redir END<CR>]], "Yank message history to clipboard")
 
 -- Parrot AI integration
@@ -102,12 +122,12 @@ desc_map("n", "<Leader>pts", ":PrtThinking status<CR>", "AI: Thinking status")
 
 -- AI Visual mode shortcuts
 local function keymapOptions(desc)
-  return {
-    noremap = true,
-    silent = true,
-    nowait = true,
-    desc = "AI: " .. desc,
-  }
+	return {
+		noremap = true,
+		silent = true,
+		nowait = true,
+		desc = "AI: " .. desc,
+	}
 end
 
 map("v", "<C-p>r", ":<C-u>'<,'>PrtRewrite<cr>", keymapOptions("Visual Rewrite"))

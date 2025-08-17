@@ -35,10 +35,11 @@ return {
 					"prettier", -- JavaScript/TypeScript/JSON formatter
 					"prettierd", -- Faster prettier
 					-- "clang-format", -- C/C++ formatter
-
+					"lua-language-server",
 					-- Linters
 					"eslint", -- JavaScript/TypeScript linter
 					"luacheck", -- Lua linter
+					"svls", -- Verilog and SV
 
 					-- Note: verilator needs to be installed separately as it's not in Mason
 					-- Install verilator with: sudo apt-get install verilator (Ubuntu/Debian)
