@@ -16,7 +16,7 @@ return {
 					anthropic = {
 						name = "anthropic",
 						endpoint = "https://api.anthropic.com/v1/messages",
-						model_endpoint = "https://api.anthropic.com/v1/models",
+						-- model_endpoint = "https://api.anthropic.com/v1/models",
 						api_key = os.getenv("ANTHROPIC_API_KEY"),
 						params = {
 							chat = { max_tokens = 4096 },
@@ -73,7 +73,7 @@ return {
 						name = "xai",
 						api_key = os.getenv("XAI_API_KEY"),
 						endpoint = "https://api.x.ai/v1/chat/completions",
-						model_endpoint = "https://api.x.ai/v1/models",
+						-- model_endpoint = "https://api.x.ai/v1/models",
 						models = {
 							"grok-3-mini-beta",
 							"grok-3-gemma-beta",
@@ -135,7 +135,7 @@ return {
 						style = "openai",
 						api_key = os.getenv("DEEPSEEK_API_KEY"),
 						endpoint = "https://api.deepseek.com/v1/chat/completions",
-						model_endpoint = "https://api.deepseek.com/models",
+						-- model_endpoint = "https://api.deepseek.com/models",
 						models = {
 							"deepseek-chat", -- DeepSeek-V3
 							"deepseek-reasoner", -- DeepSeek-R1
@@ -213,14 +213,15 @@ return {
 							"gpt-4o",
 							"claude-sonnet-4",
 						},
+						-- model_endpoint = "http://localhost:8000/v1/models",
 						topic_prompt = "Summarize our conversation in 3-4 words.",
 						topic = {
 							model = "gpt-4o",
 							params = { max_completion_tokens = 64 },
 						},
 						params = {
-							chat = { temperature = 0.7, top_p = 1 },
-							command = { temperature = 0.7, top_p = 1 },
+							chat = { temperature = 0.7, top_p = 1, max_tokens = 8192 },
+							command = { temperature = 0.7, top_p = 1, max_tokens = 8192 },
 						},
 					},
 				},
@@ -502,5 +503,17 @@ return {
 	{
 		"nvim-lua/plenary.nvim",
 		lazy = true,
+	},
+
+	-- Markdown Preview
+	-- install with yarn or npm
+	{
+		"iamcco/markdown-preview.nvim",
+		cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+		build = "cd app && yarn install",
+		init = function()
+			vim.g.mkdp_filetypes = { "markdown" }
+		end,
+		ft = { "markdown" },
 	},
 }

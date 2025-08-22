@@ -60,7 +60,7 @@ return {
 				virtual_text = false,
 				signs = true,
 				underline = true,
-				update_in_insert = false,
+				update_in_insert = true,  -- Enable updates while typing
 				severity_sort = true,
 				float = {
 					border = "rounded",
@@ -252,73 +252,41 @@ return {
 				on_attach = function(client, bufnr)
 					on_attach(client, bufnr)
 
-					-- Disable diagnostics for SystemVerilog files
-					vim.diagnostic.disable(bufnr)
+					-- Enable diagnostics for SystemVerilog files
+					-- vim.diagnostic.disable(bufnr)  -- Commented out to enable diagnostics
 
 					print("SystemVerilog LSP attached with enhanced context support")
 				end,
 				handlers = handlers,
-				settings = {
-					systemverilog = {
-						-- File indexing configuration
-						includeIndexing = {
-							"**/*.sv",
-							"**/*.svh",
-							"**/*.v",
-							"**/*.vh",
-						},
-						excludeIndexing = {
-							"**/sim/**",
-							"**/tb/**",
-						},
-						-- Library paths - important for finding built-in classes and methods
-						libraryFiles = {
-							"**/*.sv",
-							"**/*.svh",
-							"**/*.v",
-							"**/*.vh",
-						},
-						-- Enhanced feature set
-						features = {
-							classContext = true,
-							memberCompletion = true,
-							hover = true,
-							signatureHelp = true,
-							-- Additional features for better context awareness
-							semanticHighlighting = true,
-							documentSymbols = true,
-							documentFormatting = true,
-						},
-						-- Parser configuration for better context understanding
-						parser = {
-							-- Enable class and covergroup parsing
-							parseClassProperties = true,
-							parseCovergroups = true,
-							parseAssertions = true,
-							parseConstraints = true,
-						},
-						-- Type information
-						typeHierarchy = {
-							enabled = true,
-							depth = 3,
-						},
-					},
-				},
+				cmd = { "svls" },
+				filetypes = { "systemverilog", "verilog" },
 				-- Improved workspace configuration
 				root_dir = function(fname)
 					local util = require("lspconfig.util")
-					return util.root_pattern("svls.toml", ".svls.toml", ".git", "package.sv")(fname)
+					return util.root_pattern(".svlint.toml", "svls.toml", ".svls.toml", ".git")(fname)
 						or util.path.dirname(fname)
 				end,
+				-- Disable built-in settings that conflict with .svlint.toml
+				settings = {},
 			})
 
-			-- Disable automatic creation of svls.toml files
-			local function ensure_svls_config()
-				-- Function intentionally left empty to disable automatic config creation
-			end
+			-- Add command to restart LSP servers
+			vim.api.nvim_create_user_command("LspRestart", function()
+				vim.cmd("LspStop")
+				vim.defer_fn(function()
+					vim.cmd("LspStart")
+				end, 1000)
+			end, { desc = "Restart LSP servers" })
 
-			-- Automatically create SVLS config
-			ensure_svls_config()
+			-- Add command to check svls status
+			vim.api.nvim_create_user_command("SvlsStatus", function()
+				local clients = vim.lsp.get_active_clients({ name = "svls" })
+				if #clients > 0 then
+					print("SVLS is running. Root dir: " .. (clients[1].config.root_dir or "unknown"))
+				else
+					print("SVLS is not running")
+				end
+			end, { desc = "Check SVLS status" })
 		end,
 	},
 

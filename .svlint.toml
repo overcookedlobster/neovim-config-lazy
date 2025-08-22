@@ -1,0 +1,65 @@
+# .svlint.toml - SystemVerilog Linter Configuration
+# Minimal configuration to reduce noise from svls
+
+[option]
+include_path = []
+define = []
+
+[rules]
+# Keep only essential syntax and semantic checks
+syntax_error = true
+semantic_error = true
+
+# Disable all style and naming rules to reduce noise
+style_operator_name_style = false
+style_textmacro_name_style = false
+style_keyword_forbidden = false
+style_indent = false
+style_line_length = false
+style_tab = false
+style_trailing_whitespace = false
+naming_convention = false
+unused_variable = false
+unused_parameter = false
+unused_port = false
+module_nonansi_forbidden = false
+module_ansi_forbidden = false
+case_default = false
+generate_for_with_label = false
+generate_if_with_label = false
+generate_case_with_label = false
+function_with_automatic = false
+task_with_automatic = false
+interface_port_with_modport = false
+procedural_continuous_assignment = false
+wire_reg = false
+inout_with_tri = false
+loop_variable_declaration = false
+for_with_begin = false
+while_with_begin = false
+genvar_declaration_in_loop = false
+genvar_declaration_out_loop = false
+priority_keyword = false
+unique_keyword = false
+unique0_keyword = false
+packed_array = false
+enum_with_type = false
+typedef_enums = false
+typedef_structs = false
+parameter_in_package = false
+localparam_type_twostate = false
+package_filename = false
+tab_character = false
+line_below_always = false
+line_below_generate = false
+operator_self_assignment = false
+keyword_forbidden_priority = false
+keyword_forbidden_unique = false
+keyword_forbidden_unique0 = false
+
+# Keep synthesis-critical rules
+always_ff_non_blocking = true
+always_comb_blocking = true
+blocking_assignment_in_always_ff = true
+non_blocking_assignment_in_always_comb = true
+

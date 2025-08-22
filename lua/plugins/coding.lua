@@ -289,6 +289,40 @@ return {
 			-- for example
 			provider = "copilot",
 			auto_suggestions_provider = "copilot",
+			-- RAG Service Configuration
+			rag_service = {
+				enabled = false, -- Enable RAG service
+				host_mount = os.getenv("HOME"), -- Mount home directory for file access
+				runner = "docker", -- Use Docker to run RAG service
+				-- LLM configuration for RAG service (for generating responses based on retrieved context)
+				llm = {
+					provider = "openai", -- Use OpenAI-compatible API format
+					endpoint = "http://localhost:8000/v1", -- Your igpt endpoint
+					api_key = "IGPT_API_KEY", -- Environment variable name for API key
+					model = "claude-sonnet-4", -- Your igpt model name
+					extra = {
+						temperature = 0.7,
+						max_tokens = 4096,
+						reasoning_effort = "medium",
+					},
+				},
+				-- Embedding configuration for RAG service (for document indexing and similarity search)
+				embed = {
+					provider = "openai", -- Use OpenAI-compatible API format
+					-- Option 1: Use your igpt endpoint if it supports embeddings
+					endpoint = "http://localhost:8000/v1", -- Your igpt endpoint
+					api_key = "IGPT_API_KEY", -- Same API key
+					model = "text-embedding-ada-002", -- Embedding model (adjust if your endpoint uses different model names)
+					-- Option 2: Uncomment below to use OpenAI for embeddings instead
+					-- endpoint = "https://api.openai.com/v1",
+					-- api_key = "OPENAI_API_KEY",
+					-- model = "text-embedding-3-large",
+					extra = {
+						-- Add any extra parameters for embedding requests
+					},
+				},
+				docker_extra_args = "", -- Additional Docker arguments if needed
+			},
 			providers = {
 				claude = {
 					model = "claude-4-sonnet",
@@ -350,7 +384,7 @@ return {
 						temperature = 0,
 						max_completion_tokens = 16384,
 						-- max_completion_tokens = 4096,
-						-- reasoning_effort = "high",
+						reasoning_effort = "high",
 					},
 					-- disable_tools = true,
 				},
