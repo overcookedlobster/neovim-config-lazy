@@ -291,28 +291,29 @@ return {
 			auto_suggestions_provider = "copilot",
 			-- RAG Service Configuration
 			rag_service = {
-				enabled = false, -- Enable RAG service
+				enabled = true, -- Enable RAG service
 				host_mount = os.getenv("HOME"), -- Mount home directory for file access
+				-- host_mount = vim.fn.expand("~/RAG"), -- Mount RAG directory for file access
 				runner = "docker", -- Use Docker to run RAG service
 				-- LLM configuration for RAG service (for generating responses based on retrieved context)
 				llm = {
-					provider = "openai", -- Use OpenAI-compatible API format
-					endpoint = "http://localhost:8000/v1", -- Your igpt endpoint
+					__inherited_from = "openai",
+					endpoint = "http://localhost:8001/v1", -- Your igpt endpoint
 					api_key = "IGPT_API_KEY", -- Environment variable name for API key
 					model = "claude-sonnet-4", -- Your igpt model name
 					extra = {
-						temperature = 0.7,
+						temperature = 0,
 						max_tokens = 4096,
-						reasoning_effort = "medium",
+						reasoning_effort = "high",
 					},
 				},
 				-- Embedding configuration for RAG service (for document indexing and similarity search)
 				embed = {
-					provider = "openai", -- Use OpenAI-compatible API format
-					-- Option 1: Use your igpt endpoint if it supports embeddings
-					endpoint = "http://localhost:8000/v1", -- Your igpt endpoint
+					__inherited_from = "openai",
+					-- Use localhost since we're using --network=host
+					endpoint = "http://localhost:8001/v1", -- Your igpt endpoint accessible from Docker
 					api_key = "IGPT_API_KEY", -- Same API key
-					model = "text-embedding-ada-002", -- Embedding model (adjust if your endpoint uses different model names)
+					model = "text-embedding-3-large", -- Embedding model (adjust if your endpoint uses different model names)
 					-- Option 2: Uncomment below to use OpenAI for embeddings instead
 					-- endpoint = "https://api.openai.com/v1",
 					-- api_key = "OPENAI_API_KEY",
@@ -321,7 +322,7 @@ return {
 						-- Add any extra parameters for embedding requests
 					},
 				},
-				docker_extra_args = "", -- Additional Docker arguments if needed
+				docker_extra_args = "--network=host", -- Additional Docker arguments if needed
 			},
 			providers = {
 				claude = {
@@ -374,7 +375,7 @@ return {
 				},
 				igpt = {
 					__inherited_from = "openai",
-					endpoint = "http://localhost:8000/v1",
+					endpoint = "http://localhost:8001/v1",
 					model = "claude-sonnet-4",
 					model_names = { "claude-sonnet-4", "gpt-4o", "gpt-35-turbo" },
 					-- model = "gpt-4o",
@@ -540,5 +541,176 @@ return {
 				end,
 			},
 		},
+	},
+	{
+		"NickvanDyke/opencode.nvim",
+		dependencies = {
+			--Recommended for better prompt input, and required to use opencode.nvim's embedded terminal - otherwise optional
+			{ "folke/snacks.nvim", opts = { input = { enabled = true } } },
+		},
+		---@type opencode.Opts
+		opts = {
+			-- Your configuration, if any - see lua/opencode/config.lua
+		},
+		keys = {
+			-- Recommended keymaps
+			{
+				"<leader>oA",
+				function()
+					require("opencode").ask()
+				end,
+				desc = "Ask opencode",
+			},
+			{
+				"<leader>oa",
+				function()
+					require("opencode").ask("@cursor: ")
+				end,
+				desc = "Ask opencode about this",
+				mode = "n",
+			},
+			{
+				"<leader>oa",
+				function()
+					require("opencode").ask("@selection: ")
+				end,
+				desc = "Ask opencode about selection",
+				mode = "v",
+			},
+			{
+				"<leader>ot",
+				function()
+					require("opencode").toggle()
+				end,
+				desc = "Toggle embedded opencode",
+			},
+			{
+				"<leader>on",
+				function()
+					require("opencode").command("session_new")
+				end,
+				desc = "New session",
+			},
+			{
+				"<leader>oy",
+				function()
+					require("opencode").command("messages_copy")
+				end,
+				desc = "Copy last message",
+			},
+			{
+				"<S-C-u>",
+				function()
+					require("opencode").command("messages_half_page_up")
+				end,
+				desc = "Scroll messages up",
+			},
+			{
+				"<S-C-d>",
+				function()
+					require("opencode").command("messages_half_page_down")
+				end,
+				desc = "Scroll messages down",
+			},
+			{
+				"<leader>op",
+				function()
+					require("opencode").select_prompt()
+				end,
+				desc = "Select prompt",
+				mode = { "n", "v" },
+			},
+			-- Example: keymap for custom prompt
+			{
+				"<leader>oe",
+				function()
+					require("opencode").prompt("Explain @cursor and its context")
+				end,
+				desc = "Explain code near cursor",
+			},
+		},
+	},
+
+	-- LeetCode plugin
+	{
+		"kawre/leetcode.nvim",
+		-- build = ":TSUpdate html", -- if you have `nvim-treesitter` installed
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+			"MunifTanjim/nui.nvim",
+			"nvim-telescope/telescope.nvim", -- for picker
+		},
+		opts = {
+			-- Use argument-based startup
+			arg = "leetcode.nvim",
+
+			-- Default language
+			lang = "cpp",
+
+			-- Storage configuration
+			storage = {
+				home = vim.fn.stdpath("data") .. "/leetcode",
+				cache = vim.fn.stdpath("cache") .. "/leetcode",
+			},
+
+			-- Console configuration
+			console = {
+				open_on_runcode = true,
+				dir = "row",
+				size = {
+					width = "90%",
+					height = "75%",
+				},
+				result = {
+					size = "60%",
+				},
+				testcase = {
+					virt_text = true,
+					size = "40%",
+				},
+			},
+
+			-- Description panel configuration
+			description = {
+				position = "left",
+				width = "40%",
+				show_stats = true,
+			},
+
+			-- Use telescope as picker
+			picker = {
+				provider = "telescope",
+			},
+
+			-- Code injection for different languages
+			injector = {
+				["cpp"] = {
+					imports = function()
+						return { "#include <bits/stdc++.h>", "using namespace std;" }
+					end,
+				},
+				["python3"] = {
+					imports = function(default_imports)
+						vim.list_extend(default_imports, { "from typing import *" })
+						return default_imports
+					end,
+				},
+			},
+
+			-- Editor settings
+			editor = {
+				reset_previous_code = true,
+				fold_imports = true,
+			},
+
+			-- Enable logging
+			logging = true,
+
+			-- Cache settings
+			cache = {
+				update_interval = 60 * 60 * 24 * 7, -- 7 days
+			},
+		},
+		cmd = "Leet", -- Lazy load on command
 	},
 }

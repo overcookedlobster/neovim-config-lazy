@@ -207,7 +207,7 @@ return {
 						name = "igpt",
 						style = "openai",
 						api_key = os.getenv("IGPT_API_KEY"),
-						endpoint = "http://localhost:8000/v1/chat/completions",
+						endpoint = "http://localhost:8001/v1/chat/completions",
 						-- model_endpoint = "http://localhost/v1/models",
 						models = {
 							"gpt-4o",
@@ -220,13 +220,14 @@ return {
 							params = { max_completion_tokens = 64 },
 						},
 						params = {
-							chat = { temperature = 0.7, top_p = 1, max_tokens = 8192 },
-							command = { temperature = 0.7, top_p = 1, max_tokens = 8192 },
+							chat = { temperature = 0, top_p = 1, max_tokens = 8192 },
+							command = { temperature = 0, top_p = 1, max_tokens = 8192 },
 						},
 					},
 				},
 
 				cmd_prefix = "Prt",
+				chat_dir = vim.fn.stdpath("data") .. "/parrot/chats",
 				chat_conceal_model_params = false,
 				user_input_ui = "buffer",
 				toggle_target = "vsplit",

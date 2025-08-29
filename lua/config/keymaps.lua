@@ -110,12 +110,53 @@ desc_map("n", "<Leader>re", ":ReloadConfig<CR>", "Reload configuration")
 -- Yank message history
 desc_map("n", "<leader>ym", [[:redir @+ | :message | :redir END<CR>]], "Yank message history to clipboard")
 
+-- Custom ChatFind command for parrot.nvim chat files
+vim.api.nvim_create_user_command("ChatFind", function()
+	local fzf = require("fzf-lua")
+	local chat_dir = vim.fn.stdpath("data") .. "/parrot/chats"
+
+	-- Check if directory exists
+	local stat = vim.loop.fs_stat(chat_dir)
+	if not stat then
+		vim.notify("Chat directory not found: " .. chat_dir, vim.log.levels.ERROR)
+		return
+	end
+
+	fzf.files({
+		prompt = "Parrot Chat Files> ",
+		cwd = chat_dir,
+		file_icons = true,
+		color_icons = true,
+		preview = "cat {}",
+		actions = {
+			["default"] = function(selected)
+				if selected and #selected > 0 then
+					local file_path = chat_dir .. "/" .. selected[1]
+					vim.cmd("edit " .. vim.fn.fnameescape(file_path))
+				end
+			end,
+			["ctrl-v"] = function(selected)
+				if selected and #selected > 0 then
+					local file_path = chat_dir .. "/" .. selected[1]
+					vim.cmd("vsplit " .. vim.fn.fnameescape(file_path))
+				end
+			end,
+			["ctrl-x"] = function(selected)
+				if selected and #selected > 0 then
+					local file_path = chat_dir .. "/" .. selected[1]
+					vim.cmd("split " .. vim.fn.fnameescape(file_path))
+				end
+			end,
+		},
+	})
+end, { desc = "Find and open parrot chat files" })
+
 -- Parrot AI integration
 desc_map("n", "<Leader>pr", ":PrtChatResponde<CR>", "AI: Chat respond")
 desc_map("n", "<Leader>prr", ":PrtChatNew<CR>", "AI: New chat")
 desc_map("n", "<Leader>pp", ":PrtProvider<CR>", "AI: Provider selection")
 desc_map("n", "<Leader>pa", ":PrtAsk<CR>", "AI: Ask a question")
-desc_map("n", "<Leader>pf", ":PrtChatFinder<CR>", "AI: Chat finder")
+desc_map("n", "<Leader>pf", ":ChatFind<CR>", "AI: Chat finder (reliable)")
 desc_map("n", "<Leader>pm", ":PrtModel<CR>", "AI: Model selection")
 desc_map("n", "<Leader>pt", ":PrtThinking<CR>", "AI: Enable thinking")
 desc_map("n", "<Leader>pts", ":PrtThinking status<CR>", "AI: Thinking status")
