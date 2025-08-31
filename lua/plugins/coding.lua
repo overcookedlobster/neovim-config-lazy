@@ -136,7 +136,7 @@ return {
 			ls.config.set_config({
 				history = false, -- Don't store snippet history for less overhead
 				enable_autosnippets = true, -- Allow autotrigger snippets
-				store_selection_keys = "<Tab>", -- For equivalent of UltiSnips visual selection
+						store_selection_keys = "<Tab>", -- Use Tab for visual selection (original functionality)
 				region_check_events = "InsertEnter", -- Event on which to check for exiting a snippet's region
 				delete_check_events = "InsertLeave",
 			})
@@ -147,20 +147,62 @@ return {
 			-- Load custom snippets
 			require("luasnip.loaders.from_lua").lazy_load({ paths = vim.fn.stdpath("config") .. "/snippets/" })
 
-			-- Keymaps for snippet navigation
-			vim.cmd([[
-        " Jump forward
-        imap <silent><expr> jk luasnip#jumpable(1) ? '<Plug>luasnip-jump-next' : 'jk'
-        smap <silent><expr> jk luasnip#jumpable(1) ? '<Plug>luasnip-jump-next' : 'jk'
+			-- Keymaps for snippet navigation using Lua (more reliable)
+			local luasnip = require("luasnip")
 
-        " Jump backward
-        imap <silent><expr> jh luasnip#jumpable(-1) ? '<Plug>luasnip-jump-prev' : 'jh'
-        smap <silent><expr> jh luasnip#jumpable(-1) ? '<Plug>luasnip-jump-prev' : 'jh'
+			-- Jump forward with jk (works with snippets and brackets/quotes)
+			vim.keymap.set({ "i", "s" }, "jk", function()
+				if luasnip.jumpable(1) then
+					luasnip.jump(1)
+				else
+					-- Check if we're inside brackets/quotes and can jump out
+					local line = vim.api.nvim_get_current_line()
+					local col = vim.api.nvim_win_get_cursor(0)[2]
+					local char_after = line:sub(col + 1, col + 1)
 
-        " Cycle forward through choice nodes with Control-F
-        imap <silent><expr> <C-f> luasnip#choice_active() ? '<Plug>luasnip-next-choice' : '<C-f>'
-        smap <silent><expr> <C-f> luasnip#choice_active() ? '<Plug>luasnip-next-choice' : '<C-f>'
-      ]])
+					-- If next character is a closing bracket/quote, jump over it
+					if char_after:match("[%)%]%}\"'`]") then
+						vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Right>", true, false, true), "n", false)
+					else
+						-- Otherwise just insert "jk"
+						vim.api.nvim_feedkeys("jk", "n", false)
+					end
+				end
+			end, { silent = true, desc = "LuaSnip: Jump forward in snippets or exit brackets/quotes" })
+
+			-- Jump backward with jh (works with snippets and brackets/quotes)
+			vim.keymap.set({ "i", "s" }, "jh", function()
+				if luasnip.jumpable(-1) then
+					luasnip.jump(-1)
+				else
+					-- Check if we're outside brackets/quotes and can jump back in
+					local line = vim.api.nvim_get_current_line()
+					local col = vim.api.nvim_win_get_cursor(0)[2]
+					local char_before = line:sub(col, col)
+					local char_before_that = line:sub(col - 1, col - 1)
+
+					-- If current character is a closing bracket/quote, jump back inside
+					if char_before:match("[%)%]%}\"'`]") then
+						vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Left>", true, false, true), "n", false)
+					-- If we're right after a pair of brackets/quotes, jump inside
+					elseif char_before_that:match("[%(%[%{\"'`]") and char_before:match("[%)%]%}\"'`]") then
+						vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Left>", true, false, true), "n", false)
+					else
+						-- Otherwise just insert "jh"
+						vim.api.nvim_feedkeys("jh", "n", false)
+					end
+				end
+			end, { silent = true, desc = "LuaSnip: Jump backward in snippets or enter brackets/quotes" })
+
+			-- Cycle through choice nodes with Control-F
+			vim.keymap.set({ "i", "s" }, "<C-f>", function()
+				if luasnip.choice_active() then
+					luasnip.change_choice(1)
+				else
+					-- If no choice active, scroll docs (cmp behavior)
+					vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-f>", true, false, true), "n", false)
+				end
+			end, { silent = true, desc = "LuaSnip: Next choice or scroll docs" })
 
 			-- Command to refresh snippets
 			vim.keymap.set(

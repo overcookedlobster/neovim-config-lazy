@@ -77,7 +77,7 @@ return {
 					return math.floor(vim.o.columns * 0.75)
 				end,
 			})
-			-- Set nvim-notify as the default notification handler
+			-- Set nvim-notify as the default notification handler (before noice loads)
 			vim.notify = notify
 		end,
 	},
@@ -127,7 +127,7 @@ return {
 				messages = {
 					-- NOTE: If you enable messages, then the cmdline is enabled automatically.
 					-- This is a current Neovim limitation.
-					enabled = true, -- Enable the Noice messages UI
+					enabled = false, -- Disable noice messages to let nvim-notify handle notifications
 					view = "notify", -- Default view for messages
 					view_error = "notify", -- View for errors
 					view_warn = "notify", -- View for warnings
@@ -139,10 +139,9 @@ return {
 					backend = "nui", -- Backend to use to show regular cmdline completions
 					kind_icons = {}, -- Set to `false` to disable icons
 				},
-				-- Configure notification positioning
+				-- Disable noice notify to prevent interference with nvim-notify
 				notify = {
-					enabled = true,
-					view = "notify",
+					enabled = false, -- Disable noice notify completely
 				},
 				-- Configure views
 				views = {
@@ -176,6 +175,10 @@ return {
 					},
 				},
 			})
+
+			-- Ensure nvim-notify remains the notification handler after noice setup
+			local notify = require("notify")
+			vim.notify = notify
 		end,
 	},
 
