@@ -58,30 +58,6 @@ return {
 		end,
 	},
 
-	-- Notifications: nvim-notify
-	{
-		"rcarriga/nvim-notify",
-		config = function()
-			local notify = require("notify")
-			notify.setup({
-				background_colour = "#000000",
-				render = "compact",
-				top_down = false,
-				stages = "fade_in_slide_out",
-				position = "top_right",
-				timeout = 3000,
-				max_height = function()
-					return math.floor(vim.o.lines * 0.75)
-				end,
-				max_width = function()
-					return math.floor(vim.o.columns * 0.75)
-				end,
-			})
-			-- Set nvim-notify as the default notification handler (before noice loads)
-			vim.notify = notify
-		end,
-	},
-
 	-- Modern UI for messages, cmdline and popupmenu: noice.nvim
 	{
 		"folke/noice.nvim",

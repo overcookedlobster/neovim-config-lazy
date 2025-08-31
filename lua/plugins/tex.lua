@@ -172,102 +172,102 @@ return {
       pattern = "tex",
       callback = function()
         -- Compilation commands (from tex.vim)
-        vim.keymap.set("n", "<leader>c", "<Cmd>update<CR><Cmd>VimtexCompileSS<CR>", {buffer = true})
-        vim.keymap.set("n", "<leader>r", "<Cmd>update<CR><Cmd>VimtexCompileSS<CR>", {buffer = true})
-        vim.keymap.set("n", "<leader>v", "<plug>(vimtex-view)", {buffer = true})
-        vim.keymap.set("n", "<leader>i", "<plug>(vimtex-info)", {buffer = true})
-        vim.keymap.set("n", "<leader>t", "<Cmd>VimtexTocToggle<CR>", {buffer = true})
-        vim.keymap.set("n", "<leader>te", "<Cmd>TexToggleShellEscape<CR>", {buffer = true})
+        vim.keymap.set("n", "<leader>c", "<Cmd>update<CR><Cmd>VimtexCompileSS<CR>", {buffer = true, desc = "TeX: Compile document"})
+        vim.keymap.set("n", "<leader>r", "<Cmd>update<CR><Cmd>VimtexCompileSS<CR>", {buffer = true, desc = "TeX: Recompile document"})
+        vim.keymap.set("n", "<leader>v", "<plug>(vimtex-view)", {buffer = true, desc = "TeX: View PDF"})
+        vim.keymap.set("n", "<leader>i", "<plug>(vimtex-info)", {buffer = true, desc = "TeX: Show info"})
+        vim.keymap.set("n", "<leader>t", "<Cmd>VimtexTocToggle<CR>", {buffer = true, desc = "TeX: Toggle table of contents"})
+        vim.keymap.set("n", "<leader>te", "<Cmd>TexToggleShellEscape<CR>", {buffer = true, desc = "TeX: Toggle shell escape"})
 
         -- Define mappings (from vimtex.vim)
         -- Delete mappings
-        vim.keymap.set("n", "dse", "<plug>(vimtex-env-delete)", {buffer = true})
-        vim.keymap.set("n", "dsc", "<plug>(vimtex-cmd-delete)", {buffer = true})
-        vim.keymap.set("n", "dsm", "<plug>(vimtex-env-delete-math)", {buffer = true})
-        vim.keymap.set("n", "dsd", "<plug>(vimtex-delim-delete)", {buffer = true})
+        vim.keymap.set("n", "dse", "<plug>(vimtex-env-delete)", {buffer = true, desc = "TeX: Delete surrounding environment"})
+        vim.keymap.set("n", "dsc", "<plug>(vimtex-cmd-delete)", {buffer = true, desc = "TeX: Delete surrounding command"})
+        vim.keymap.set("n", "dsm", "<plug>(vimtex-env-delete-math)", {buffer = true, desc = "TeX: Delete surrounding math environment"})
+        vim.keymap.set("n", "dsd", "<plug>(vimtex-delim-delete)", {buffer = true, desc = "TeX: Delete surrounding delimiters"})
 
         -- Change mappings
-        vim.keymap.set("n", "cse", "<plug>(vimtex-env-change)", {buffer = true})
-        vim.keymap.set("n", "csc", "<plug>(vimtex-cmd-change)", {buffer = true})
-        vim.keymap.set("n", "csm", "<plug>(vimtex-env-change-math)", {buffer = true})
-        vim.keymap.set("n", "csd", "<plug>(vimtex-delim-change-math)", {buffer = true})
+        vim.keymap.set("n", "cse", "<plug>(vimtex-env-change)", {buffer = true, desc = "TeX: Change surrounding environment"})
+        vim.keymap.set("n", "csc", "<plug>(vimtex-cmd-change)", {buffer = true, desc = "TeX: Change surrounding command"})
+        vim.keymap.set("n", "csm", "<plug>(vimtex-env-change-math)", {buffer = true, desc = "TeX: Change surrounding math environment"})
+        vim.keymap.set("n", "csd", "<plug>(vimtex-delim-change-math)", {buffer = true, desc = "TeX: Change surrounding math delimiters"})
 
         -- Toggle mappings
-        vim.keymap.set("n", "tsf", "<plug>(vimtex-cmd-toggle-frac)", {buffer = true})
-        vim.keymap.set("n", "tsc", "<plug>(vimtex-cmd-toggle-star)", {buffer = true})
-        vim.keymap.set("n", "tse", "<plug>(vimtex-env-toggle-star)", {buffer = true})
-        vim.keymap.set("n", "tsd", "<plug>(vimtex-delim-toggle-modifier)", {buffer = true})
-        vim.keymap.set("n", "tsD", "<plug>(vimtex-delim-toggle-modifier-reverse)", {buffer = true})
-        vim.keymap.set("n", "tsm", "<plug>(vimtex-env-toggle-math)", {buffer = true})
-        vim.keymap.set("i", "]]", "<plug>(vimtex-delim-close)", {buffer = true})
+        vim.keymap.set("n", "tsf", "<plug>(vimtex-cmd-toggle-frac)", {buffer = true, desc = "TeX: Toggle fraction command"})
+        vim.keymap.set("n", "tsc", "<plug>(vimtex-cmd-toggle-star)", {buffer = true, desc = "TeX: Toggle command star variant"})
+        vim.keymap.set("n", "tse", "<plug>(vimtex-env-toggle-star)", {buffer = true, desc = "TeX: Toggle environment star variant"})
+        vim.keymap.set("n", "tsd", "<plug>(vimtex-delim-toggle-modifier)", {buffer = true, desc = "TeX: Toggle delimiter modifier"})
+        vim.keymap.set("n", "tsD", "<plug>(vimtex-delim-toggle-modifier-reverse)", {buffer = true, desc = "TeX: Toggle delimiter modifier (reverse)"})
+        vim.keymap.set("n", "tsm", "<plug>(vimtex-env-toggle-math)", {buffer = true, desc = "TeX: Toggle math environment"})
+        vim.keymap.set("i", "]]", "<plug>(vimtex-delim-close)", {buffer = true, desc = "TeX: Close delimiter"})
 
         -- Text objects (from vimtex.vim)
         -- Command text objects
-        vim.keymap.set("o", "ac", "<plug>(vimtex-ac)", {buffer = true})
-        vim.keymap.set("x", "ac", "<plug>(vimtex-ac)", {buffer = true})
-        vim.keymap.set("o", "ic", "<plug>(vimtex-ic)", {buffer = true})
-        vim.keymap.set("x", "ic", "<plug>(vimtex-ic)", {buffer = true})
+        vim.keymap.set("o", "ac", "<plug>(vimtex-ac)", {buffer = true, desc = "TeX: Around command"})
+        vim.keymap.set("x", "ac", "<plug>(vimtex-ac)", {buffer = true, desc = "TeX: Around command"})
+        vim.keymap.set("o", "ic", "<plug>(vimtex-ic)", {buffer = true, desc = "TeX: Inside command"})
+        vim.keymap.set("x", "ic", "<plug>(vimtex-ic)", {buffer = true, desc = "TeX: Inside command"})
 
         -- Delimiter text objects
-        vim.keymap.set("o", "ad", "<plug>(vimtex-ad)", {buffer = true})
-        vim.keymap.set("x", "ad", "<plug>(vimtex-ad)", {buffer = true})
-        vim.keymap.set("o", "id", "<plug>(vimtex-id)", {buffer = true})
-        vim.keymap.set("x", "id", "<plug>(vimtex-id)", {buffer = true})
+        vim.keymap.set("o", "ad", "<plug>(vimtex-ad)", {buffer = true, desc = "TeX: Around delimiters"})
+        vim.keymap.set("x", "ad", "<plug>(vimtex-ad)", {buffer = true, desc = "TeX: Around delimiters"})
+        vim.keymap.set("o", "id", "<plug>(vimtex-id)", {buffer = true, desc = "TeX: Inside delimiters"})
+        vim.keymap.set("x", "id", "<plug>(vimtex-id)", {buffer = true, desc = "TeX: Inside delimiters"})
 
         -- Environment text objects
-        vim.keymap.set("o", "ae", "<plug>(vimtex-ae)", {buffer = true})
-        vim.keymap.set("x", "ae", "<plug>(vimtex-ae)", {buffer = true})
-        vim.keymap.set("o", "ie", "<plug>(vimtex-ie)", {buffer = true})
-        vim.keymap.set("x", "ie", "<plug>(vimtex-ie)", {buffer = true})
+        vim.keymap.set("o", "ae", "<plug>(vimtex-ae)", {buffer = true, desc = "TeX: Around environment"})
+        vim.keymap.set("x", "ae", "<plug>(vimtex-ae)", {buffer = true, desc = "TeX: Around environment"})
+        vim.keymap.set("o", "ie", "<plug>(vimtex-ie)", {buffer = true, desc = "TeX: Inside environment"})
+        vim.keymap.set("x", "ie", "<plug>(vimtex-ie)", {buffer = true, desc = "TeX: Inside environment"})
 
         -- Math text objects
-        vim.keymap.set("o", "am", "<plug>(vimtex-a$)", {buffer = true})
-        vim.keymap.set("x", "am", "<plug>(vimtex-a$)", {buffer = true})
-        vim.keymap.set("o", "im", "<plug>(vimtex-i$)", {buffer = true})
-        vim.keymap.set("x", "im", "<plug>(vimtex-i$)", {buffer = true})
+        vim.keymap.set("o", "am", "<plug>(vimtex-a$)", {buffer = true, desc = "TeX: Around math"})
+        vim.keymap.set("x", "am", "<plug>(vimtex-a$)", {buffer = true, desc = "TeX: Around math"})
+        vim.keymap.set("o", "im", "<plug>(vimtex-i$)", {buffer = true, desc = "TeX: Inside math"})
+        vim.keymap.set("x", "im", "<plug>(vimtex-i$)", {buffer = true, desc = "TeX: Inside math"})
 
         -- Item text objects
-        vim.keymap.set("o", "ai", "<plug>(vimtex-am)", {buffer = true})
-        vim.keymap.set("x", "ai", "<plug>(vimtex-am)", {buffer = true})
-        vim.keymap.set("o", "ii", "<plug>(vimtex-im)", {buffer = true})
-        vim.keymap.set("x", "ii", "<plug>(vimtex-im)", {buffer = true})
+        vim.keymap.set("o", "ai", "<plug>(vimtex-am)", {buffer = true, desc = "TeX: Around item"})
+        vim.keymap.set("x", "ai", "<plug>(vimtex-am)", {buffer = true, desc = "TeX: Around item"})
+        vim.keymap.set("o", "ii", "<plug>(vimtex-im)", {buffer = true, desc = "TeX: Inside item"})
+        vim.keymap.set("x", "ii", "<plug>(vimtex-im)", {buffer = true, desc = "TeX: Inside item"})
 
         -- Section/paragraph text objects
-        vim.keymap.set("o", "aP", "<plug>(vimtex-aP)", {buffer = true})
-        vim.keymap.set("x", "aP", "<plug>(vimtex-aP)", {buffer = true})
-        vim.keymap.set("o", "iP", "<plug>(vimtex-iP)", {buffer = true})
-        vim.keymap.set("x", "iP", "<plug>(vimtex-iP)", {buffer = true})
+        vim.keymap.set("o", "aP", "<plug>(vimtex-aP)", {buffer = true, desc = "TeX: Around paragraph"})
+        vim.keymap.set("x", "aP", "<plug>(vimtex-aP)", {buffer = true, desc = "TeX: Around paragraph"})
+        vim.keymap.set("o", "iP", "<plug>(vimtex-iP)", {buffer = true, desc = "TeX: Inside paragraph"})
+        vim.keymap.set("x", "iP", "<plug>(vimtex-iP)", {buffer = true, desc = "TeX: Inside paragraph"})
 
         -- Motion mappings
-        vim.keymap.set("", "%", "<plug>(vimtex-%)", {buffer = true})
-        vim.keymap.set("", "]]", "<plug>(vimtex-]])", {buffer = true})
-        vim.keymap.set("", "][", "<plug>(vimtex-][)", {buffer = true})
-        vim.keymap.set("", "[]", "<plug>(vimtex-[])", {buffer = true})
-        vim.keymap.set("", "[[", "<plug>(vimtex-[[)", {buffer = true})
+        vim.keymap.set("", "%", "<plug>(vimtex-%)", {buffer = true, desc = "TeX: Match delimiter"})
+        vim.keymap.set("", "]]", "<plug>(vimtex-]])", {buffer = true, desc = "TeX: Next section start"})
+        vim.keymap.set("", "][", "<plug>(vimtex-][)", {buffer = true, desc = "TeX: Next section end"})
+        vim.keymap.set("", "[]", "<plug>(vimtex-[])", {buffer = true, desc = "TeX: Previous section end"})
+        vim.keymap.set("", "[[", "<plug>(vimtex-[[)", {buffer = true, desc = "TeX: Previous section start"})
 
         -- Section motions
-        vim.keymap.set("", "]m", "<plug>(vimtex-]m)", {buffer = true})
-        vim.keymap.set("", "]M", "<plug>(vimtex-]M)", {buffer = true})
-        vim.keymap.set("", "[m", "<plug>(vimtex-[m)", {buffer = true})
-        vim.keymap.set("", "[M", "<plug>(vimtex-[M)", {buffer = true})
+        vim.keymap.set("", "]m", "<plug>(vimtex-]m)", {buffer = true, desc = "TeX: Next section"})
+        vim.keymap.set("", "]M", "<plug>(vimtex-]M)", {buffer = true, desc = "TeX: Next section end"})
+        vim.keymap.set("", "[m", "<plug>(vimtex-[m)", {buffer = true, desc = "TeX: Previous section"})
+        vim.keymap.set("", "[M", "<plug>(vimtex-[M)", {buffer = true, desc = "TeX: Previous section end"})
 
         -- Environment motions
-        vim.keymap.set("", "]n", "<plug>(vimtex-]n)", {buffer = true})
-        vim.keymap.set("", "]N", "<plug>(vimtex-]N)", {buffer = true})
-        vim.keymap.set("", "[n", "<plug>(vimtex-[n)", {buffer = true})
-        vim.keymap.set("", "[N", "<plug>(vimtex-[N)", {buffer = true})
+        vim.keymap.set("", "]n", "<plug>(vimtex-]n)", {buffer = true, desc = "TeX: Next environment"})
+        vim.keymap.set("", "]N", "<plug>(vimtex-]N)", {buffer = true, desc = "TeX: Next environment end"})
+        vim.keymap.set("", "[n", "<plug>(vimtex-[n)", {buffer = true, desc = "TeX: Previous environment"})
+        vim.keymap.set("", "[N", "<plug>(vimtex-[N)", {buffer = true, desc = "TeX: Previous environment end"})
 
         -- Item motions
-        vim.keymap.set("", "]r", "<plug>(vimtex-]r)", {buffer = true})
-        vim.keymap.set("", "]R", "<plug>(vimtex-]R)", {buffer = true})
-        vim.keymap.set("", "[r", "<plug>(vimtex-[r)", {buffer = true})
-        vim.keymap.set("", "[R", "<plug>(vimtex-[R)", {buffer = true})
+        vim.keymap.set("", "]r", "<plug>(vimtex-]r)", {buffer = true, desc = "TeX: Next item"})
+        vim.keymap.set("", "]R", "<plug>(vimtex-]R)", {buffer = true, desc = "TeX: Next item end"})
+        vim.keymap.set("", "[r", "<plug>(vimtex-[r)", {buffer = true, desc = "TeX: Previous item"})
+        vim.keymap.set("", "[R", "<plug>(vimtex-[R)", {buffer = true, desc = "TeX: Previous item end"})
 
         -- Comment motions
-        vim.keymap.set("", "]/", "<plug>(vimtex-]/)", {buffer = true})
-        vim.keymap.set("", "]*", "<plug>(vimtex-]star)", {buffer = true})
-        vim.keymap.set("", "[/", "<plug>(vimtex-[/)", {buffer = true})
-        vim.keymap.set("", "[*", "<plug>(vimtex-[star)", {buffer = true})
+        vim.keymap.set("", "]/", "<plug>(vimtex-]/)", {buffer = true, desc = "TeX: Next comment"})
+        vim.keymap.set("", "]*", "<plug>(vimtex-]star)", {buffer = true, desc = "TeX: Next comment end"})
+        vim.keymap.set("", "[/", "<plug>(vimtex-[/)", {buffer = true, desc = "TeX: Previous comment"})
+        vim.keymap.set("", "[*", "<plug>(vimtex-[star)", {buffer = true, desc = "TeX: Previous comment end"})
 
         -- Check for minted package and enable shell escape if needed
         local cmd = 'head -n 20 ' .. vim.fn.expand('%') .. ' | grep "minted" > /dev/null'

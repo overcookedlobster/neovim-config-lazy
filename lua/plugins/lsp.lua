@@ -37,6 +37,7 @@ return {
 					-- "clang-format", -- C/C++ formatter
 					"lua-language-server",
 					-- Linters
+					"flake8", -- Python linter (install via Mason)
 					"eslint", -- JavaScript/TypeScript linter
 					"luacheck", -- Lua linter
 					"svls", -- Verilog and SV
@@ -60,7 +61,7 @@ return {
 				virtual_text = false,
 				signs = true,
 				underline = true,
-				update_in_insert = true,  -- Enable updates while typing
+				update_in_insert = true, -- Enable updates while typing
 				severity_sort = true,
 				float = {
 					border = "rounded",
@@ -377,12 +378,33 @@ return {
 				end,
 			}
 
-			-- Auto-lint on various events
+			-- Helper function to check if a linter command exists
+			local function linter_exists(cmd)
+				return vim.fn.executable(cmd) == 1
+			end
+
+			-- Auto-lint on various events with error handling
 			local lint_augroup = vim.api.nvim_create_augroup("lint", { clear = true })
 			vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
 				group = lint_augroup,
 				callback = function()
-					lint.try_lint()
+					-- Get the current filetype
+					local ft = vim.bo.filetype
+					local linters = lint.linters_by_ft[ft] or {}
+
+					-- Check if any linters are available for this filetype
+					local available_linters = {}
+					for _, linter_name in ipairs(linters) do
+						local linter_config = lint.linters[linter_name]
+						if linter_config and linter_exists(linter_config.cmd) then
+							table.insert(available_linters, linter_name)
+						end
+					end
+
+					-- Only run linting if we have available linters
+					if #available_linters > 0 then
+						lint.try_lint(available_linters)
+					end
 				end,
 			})
 

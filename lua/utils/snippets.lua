@@ -52,7 +52,7 @@ function M.setup()
   -- Set up mapping for Tab in visual mode to capture selection
   vim.api.nvim_set_keymap('v', '<Tab>',
     [[<Esc>:lua require('utils.snippets').capture_visual_selection()<CR>gvi<Esc>]],
-    {noremap = true, silent = true})
+    {noremap = true, silent = true, desc = "Snippets: Capture visual selection"})
 
   -- Set up mappings for auto-closing brackets with content insertion
   for _, pair in ipairs({
@@ -65,7 +65,7 @@ function M.setup()
   }) do
     vim.api.nvim_set_keymap('i', pair[1],
       string.format('<Cmd>lua require("utils.snippets").handle_bracket("%s", "%s")<CR>', pair[1], pair[2]),
-      {noremap = true, silent = true})
+      {noremap = true, silent = true, desc = "Snippets: Auto-close " .. pair[1] .. pair[2] .. " with content"})
   end
 
   -- Print a message to confirm setup is complete

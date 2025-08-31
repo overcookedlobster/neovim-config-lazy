@@ -89,7 +89,7 @@ return {
 				else
 					cmp.complete()
 				end
-			end, { silent = true })
+			end, { silent = true, desc = "Completion: Toggle completion menu" })
 
 			-- Special configuration for SystemVerilog files
 			cmp.setup.filetype("systemverilog", {
@@ -136,7 +136,7 @@ return {
 			ls.config.set_config({
 				history = false, -- Don't store snippet history for less overhead
 				enable_autosnippets = true, -- Allow autotrigger snippets
-						store_selection_keys = "<Tab>", -- Use Tab for visual selection (original functionality)
+				store_selection_keys = "<Tab>", -- Use Tab for visual selection (original functionality)
 				region_check_events = "InsertEnter", -- Event on which to check for exiting a snippet's region
 				delete_check_events = "InsertLeave",
 			})
@@ -342,7 +342,7 @@ return {
 					__inherited_from = "openai",
 					endpoint = "http://localhost:8001/v1", -- Your igpt endpoint
 					api_key = "IGPT_API_KEY", -- Environment variable name for API key
-					model = "claude-sonnet-4", -- Your igpt model name
+					model = "gpt-4o", -- Your igpt model name
 					extra = {
 						temperature = 0,
 						max_tokens = 4096,
