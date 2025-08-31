@@ -46,6 +46,7 @@ return {
 				enable = true, -- Enable TreeSitter-based indentation
 				disable = { "tex" }, -- Disable TS indentation for tex files as VimTeX handles this better
 			},
+
 		})
 	end,
 }

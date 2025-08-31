@@ -290,6 +290,156 @@ return {
 		end,
 	},
 
+
+	-- Indent guides: Show indentation levels with lines
+	{
+		"lukas-reineke/indent-blankline.nvim",
+		main = "ibl",
+		opts = {
+			indent = {
+				char = "│",
+				tab_char = "│",
+			},
+			scope = {
+				enabled = true,
+				show_start = true,
+				show_end = true,
+				injected_languages = false,
+				highlight = { "Function", "Label" },
+				priority = 500,
+			},
+			exclude = {
+				filetypes = {
+					"help",
+					"alpha",
+					"dashboard",
+					"neo-tree",
+					"Trouble",
+					"trouble",
+					"lazy",
+					"mason",
+					"notify",
+					"toggleterm",
+					"lazyterm",
+				},
+			},
+		},
+		config = function(_, opts)
+			require("ibl").setup(opts)
+		end,
+	},
+
+	-- Rainbow brackets: Colorize matching brackets
+	{
+		"HiPhish/rainbow-delimiters.nvim",
+		config = function()
+			local rainbow_delimiters = require("rainbow-delimiters")
+
+			vim.g.rainbow_delimiters = {
+				strategy = {
+					[""] = rainbow_delimiters.strategy["global"],
+					vim = rainbow_delimiters.strategy["local"],
+				},
+				query = {
+					[""] = "rainbow-delimiters",
+					lua = "rainbow-blocks",
+				},
+				priority = {
+					[""] = 110,
+					lua = 210,
+				},
+				highlight = {
+					"RainbowDelimiterRed",
+					"RainbowDelimiterYellow",
+					"RainbowDelimiterBlue",
+					"RainbowDelimiterOrange",
+					"RainbowDelimiterGreen",
+					"RainbowDelimiterViolet",
+					"RainbowDelimiterCyan",
+				},
+			}
+		end,
+	},
+
+	-- Bracket pair highlighting and auto-pairing
+	{
+		"windwp/nvim-autopairs",
+		event = "InsertEnter",
+		config = function()
+			local autopairs = require("nvim-autopairs")
+			local Rule = require("nvim-autopairs.rule")
+
+			autopairs.setup({
+				check_ts = true,
+				ts_config = {
+					lua = { "string", "source" },
+					javascript = { "string", "template_string" },
+					java = false,
+				},
+				disable_filetype = { "TelescopePrompt", "spectre_panel" },
+				fast_wrap = {
+					map = "<M-e>",
+					chars = { "{", "[", "(", '"', "'" },
+					pattern = string.gsub([[ [%'%"%)%>%]%)%}%,] ]], "%s+", ""),
+					offset = 0,
+					end_key = "$",
+					keys = "qwertyuiopzxcvbnmasdfghjkl",
+					check_comma = true,
+					highlight = "PmenuSel",
+					highlight_grey = "LineNr",
+				},
+			})
+
+			-- Add custom rules for specific filetypes
+			autopairs.add_rules({
+				Rule(" ", " "):with_pair(function(opts)
+					local pair = opts.line:sub(opts.col - 1, opts.col)
+					return vim.tbl_contains({ "()", "[]", "{}" }, pair)
+				end),
+				Rule("( ", " )")
+					:with_pair(function()
+						return false
+					end)
+					:with_move(function(opts)
+						return opts.prev_char:match(".%)") ~= nil
+					end)
+					:use_key(")"),
+				Rule("{ ", " }")
+					:with_pair(function()
+						return false
+					end)
+					:with_move(function(opts)
+						return opts.prev_char:match(".%}") ~= nil
+					end)
+					:use_key("}"),
+				Rule("[ ", " ]")
+					:with_pair(function()
+						return false
+					end)
+					:with_move(function(opts)
+						return opts.prev_char:match(".%]") ~= nil
+					end)
+					:use_key("]"),
+			})
+
+			-- Integration with nvim-cmp
+			local cmp_autopairs = require("nvim-autopairs.completion.cmp")
+			local cmp = require("cmp")
+			cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
+		end,
+	},
+
+	-- Matchup: Enhanced % matching
+	{
+		"andymass/vim-matchup",
+		event = { "BufReadPost" },
+		config = function()
+			vim.g.matchup_matchparen_offscreen = { method = "popup" }
+			vim.g.matchup_matchparen_deferred = 1
+			vim.g.matchup_matchparen_hi_surround_always = 1
+		end,
+	},
+
 	-- Additional useful editor plugins
 	{
 		"tpope/vim-fugitive", -- Git integration
