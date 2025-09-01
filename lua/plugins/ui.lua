@@ -49,14 +49,20 @@ return {
 				-- Search operations (Telescope)
 				{ "<leader>s", group = "Search (Telescope)" },
 
-				-- Tab operations
-				{ "<leader>t", group = "Tabs/Tasks/Terminal" },
+				-- Terminal/Tab operations
+				{ "<leader>t", group = "Terminal/Tabs" },
 
 				-- Window operations
 				{ "<leader>w", group = "Windows" },
 
+				-- Development/Debug operations
+				{ "<leader>d", group = "Debug/Development" },
+
 				-- Diagnostics/Trouble
 				{ "<leader>x", group = "Diagnostics" },
+
+				-- Spell checking operations
+				{ "<leader>z", group = "Spell Checking" },
 			})
 
 			-- Filetype-specific which-key groups

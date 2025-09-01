@@ -510,10 +510,18 @@ return {
 	{
 		"simonefranza/nvim-conv",
 		cmd = {
-			"ConvDec", "ConvHex", "ConvOct", "ConvBin",
-			"ConvStr", "ConvBytes", "ConvFarenheit", "ConvCelsius",
-			"ConvDataTransRate", "ConvMetricImperial", "ConvColor",
-			"ConvSetPrecision"
+			"ConvDec",
+			"ConvHex",
+			"ConvOct",
+			"ConvBin",
+			"ConvStr",
+			"ConvBytes",
+			"ConvFarenheit",
+			"ConvCelsius",
+			"ConvDataTransRate",
+			"ConvMetricImperial",
+			"ConvColor",
+			"ConvSetPrecision",
 		},
 		config = function()
 			-- Set default precision to 4 decimal places
@@ -531,5 +539,25 @@ return {
 			vim.g.mkdp_filetypes = { "markdown" }
 		end,
 		ft = { "markdown" },
+	},
+
+	-- Thesaurus plugin for synonyms and definitions
+	{
+		"Ron89/thesaurus_query.vim",
+		cmd = { "ThesaurusQueryReplaceCurrentWord", "ThesaurusQueryLookupCurrentWord" },
+		config = function()
+			-- Configure thesaurus sources
+			vim.g.tq_language = { "en" }
+			vim.g.tq_online_backends_timeout = 0.6
+			vim.g.tq_truncation_on_repl = 1
+			vim.g.tq_truncation_on_syno = 1
+
+			-- Use multiple backends for better results
+			vim.g.tq_enabled_backends = {
+				"datamuse_com",
+				"mthesaur_txt",
+				"openoffice_en",
+			}
+		end,
 	},
 }

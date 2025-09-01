@@ -188,71 +188,11 @@ desc_map("n", "<Leader>nr", ":RandomNote<CR>", "Notes: Create random note")
 desc_map("n", "<Leader>ns", ":SearchNotes<CR>", "Notes: Search in notes")
 desc_map("n", "<Leader>ng", ":GrepRandomNotes<CR>", "Notes: Grep random notes")
 
--- Tasks (ToggleTasks)
-desc_map("n", "<Leader>ts", function()
-	vim.cmd("Rooter") -- switch to project root directory
-	require("toggletasks.discovery")
-		.tasks()
-		:filter(function(task)
-			return vim.tbl_contains(task.config.tags or {}, "serve")
-		end)
-		:each(function(task)
-			task:spawn()
-			task.term:open()
-		end)
-	vim.cmd("wincmd k") -- Return cursor to original window
-	vim.cmd("stopinsert") -- Return to normal mode
-end, "Tasks: Run serve tasks (ToggleTasks)")
-
-desc_map("n", "<Leader>tp", function()
-	vim.cmd("Rooter") -- switch to project root directory
-	require("toggletasks.discovery")
-		.tasks()
-		:filter(function(task)
-			return vim.tbl_contains(task.config.tags or {}, "run")
-		end)
-		:each(function(task)
-			task:spawn()
-			task.term:open()
-		end)
-	vim.cmd("wincmd k") -- Return cursor to original window
-	vim.cmd("stopinsert") -- Return to normal mode
-end, "Tasks: Run run tasks (ToggleTasks)")
-
-desc_map("n", "<Leader>tb", function()
-	vim.cmd("Rooter") -- switch to project root directory
-	require("toggletasks.discovery")
-		.tasks()
-		:filter(function(task)
-			return vim.tbl_contains(task.config.tags or {}, "build")
-		end)
-		:each(function(task)
-			task:spawn()
-			task.term:open()
-		end)
-	vim.cmd("wincmd k") -- Return cursor to original window
-	vim.cmd("stopinsert") -- Return to normal mode
-end, "Tasks: Run build tasks (ToggleTasks)")
-
-desc_map("n", "<Leader>tv", function()
-	vim.cmd("Rooter") -- switch to project root directory
-	require("toggletasks.discovery")
-		.tasks()
-		:filter(function(task)
-			return vim.tbl_contains(task.config.tags or {}, "view")
-		end)
-		:each(function(task)
-			task:spawn()
-			task.term:open()
-		end)
-	vim.cmd("wincmd k") -- Return cursor to original window
-	vim.cmd("stopinsert") -- Return to normal mode
-end, "Tasks: Run view tasks (ToggleTasks)")
-
-desc_map("n", "<Leader>tt", ":ToggleTerm<CR>", "Tasks: Toggle terminal (ToggleTerm)")
-desc_map("n", "<Leader>t1", ":1ToggleTerm<CR>", "Tasks: Toggle terminal 1 (ToggleTerm)")
-desc_map("n", "<Leader>t2", ":2ToggleTerm<CR>", "Tasks: Toggle terminal 2 (ToggleTerm)")
-desc_map("n", "<Leader>tr", ":Rooter<CR>", "Tasks: Change to project root (Rooter)")
+-- Terminal (ToggleTerm)
+desc_map("n", "<Leader>tt", ":ToggleTerm<CR>", "Terminal: Toggle terminal (ToggleTerm)")
+desc_map("n", "<Leader>t1", ":1ToggleTerm<CR>", "Terminal: Toggle terminal 1 (ToggleTerm)")
+desc_map("n", "<Leader>t2", ":2ToggleTerm<CR>", "Terminal: Toggle terminal 2 (ToggleTerm)")
+desc_map("n", "<Leader>tr", ":Rooter<CR>", "Terminal: Change to project root (Rooter)")
 
 -- Window operations
 desc_map("n", "<Leader>wh", "<C-w>h", "Windows: Move to left window")
@@ -275,10 +215,28 @@ desc_map("n", "<Leader>ff", ":NvimTreeFocus<CR>", "Files: Focus NvimTree")
 desc_map("x", "ga", "<Plug>(EasyAlign)", "Align: Interactive align (visual)")
 desc_map("n", "ga", "<Plug>(EasyAlign)", "Align: Interactive align (motion)")
 
--- Telescope task picker
-desc_map("n", "<Leader>tk", function()
-	require("telescope").extensions.toggletasks.spawn()
-end, "Tasks: Open task picker (Telescope)")
+-- Development/Debug operations
+desc_map("n", "<Leader>dd", ":ChecklistDebug<CR>", "Debug: Toggle checklist debugging")
+desc_map("n", "<Leader>dc", ":ChecklistOpen<CR>", "Debug: Open checklist")
+desc_map("n", "<Leader>dg", ":ChecklistGenerate<CR>", "Debug: Generate directory structure")
+
+-- Spell checking operations
+desc_map("n", "<Leader>zz", function()
+	require("personal.spell").toggle_spell()
+end, "Spell: Toggle spell checking")
+desc_map("n", "<Leader>zs", function()
+	require("personal.spell").toggle_slovene_spell()
+end, "Spell: Toggle Slovene spell checking")
+desc_map("n", "<Leader>zn", "]s", "Spell: Next misspelled word")
+desc_map("n", "<Leader>zp", "[s", "Spell: Previous misspelled word")
+desc_map("n", "<Leader>za", "zg", "Spell: Add word to dictionary")
+desc_map("n", "<Leader>z?", function()
+	vim.cmd("normal! z=")
+end, "Spell: Show spelling suggestions")
+
+-- Thesaurus operations
+desc_map("n", "<Leader>zr", ":ThesaurusQueryReplaceCurrentWord<CR>", "Thesaurus: Replace current word with synonym")
+desc_map("n", "<Leader>zl", ":ThesaurusQueryLookupCurrentWord<CR>", "Thesaurus: Lookup synonyms for current word")
 
 -- Diagnostics (Trouble)
 desc_map("n", "<Leader>xx", ":Trouble<CR>", "Diagnostics: Open trouble (Trouble)")

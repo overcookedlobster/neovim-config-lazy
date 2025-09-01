@@ -57,6 +57,7 @@
   "telescope-file-browser.nvim": { "branch": "master", "commit": "3610dc7dc91f06aa98b11dca5cc30dfa98626b7e" },
   "telescope-heading.nvim": { "branch": "main", "commit": "e85c0f69cb64048f56e76548dcb2f10277576df9" },
   "telescope.nvim": { "branch": "0.1.x", "commit": "a0bbec21143c7bc5f8bb02e0005fa0b982edc026" },
+  "thesaurus_query.vim": { "branch": "master", "commit": "92be7e003236f4d43b86ad1b84d092fceb982ed4" },
   "toast.vim": { "branch": "master", "commit": "6ef5cea8298e64a555cfaf7541bb94781d06dc69" },
   "toggletasks.nvim": { "branch": "master", "commit": "7138dda86bd4ec908ef5342e78c60bfbd23f4506" },
   "toggleterm.nvim": { "branch": "main", "commit": "50ea089fc548917cc3cc16b46a8211833b9e3c7c" },

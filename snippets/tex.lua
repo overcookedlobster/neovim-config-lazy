@@ -13,46 +13,72 @@ local fmta = require("luasnip.extras.fmt").fmta
 local rep = require("luasnip.extras").rep
 
 -- Load helper functions
-local helpers = require('personal.luasnip-helper-funcs')
+local helpers = require("personal.luasnip-helper-funcs")
 local get_visual = helpers.get_visual
 
 -- Math context detection
 local tex = {}
-tex.in_mathzone = function() return vim.fn['vimtex#syntax#in_mathzone']() == 1 end
-tex.in_text = function() return not tex.in_mathzone() end
+tex.in_mathzone = function()
+	return vim.fn["vimtex#syntax#in_mathzone"]() == 1
+end
+tex.in_text = function()
+	return not tex.in_mathzone()
+end
 
 -- Helper function to load snippets from a file
 local function load_snippets(file)
-    local status, snippets = pcall(function()
-        -- Create a new environment with the shorthand functions and other necessities
-        local env = {
-            s = s, sn = sn, t = t, i = i, f = f, d = d, c = c,
-            fmt = fmt, fmta = fmta, rep = rep,
-            ls = ls,  -- Also pass the entire luasnip module
-            vim = vim,  -- Pass vim module for vim.fn calls
-            require = require,  -- Include the require function
-            get_visual = get_visual,  -- Pass the get_visual function
-            tex = tex  -- Pass the tex table with its functions
-        }
-        -- Set the environment's metatable to fall back to the global environment
-        setmetatable(env, {__index = _G})
+	local status, snippets = pcall(function()
+		-- Create a new environment with the shorthand functions and other necessities
+		local env = {
+			s = s,
+			sn = sn,
+			t = t,
+			i = i,
+			f = f,
+			d = d,
+			c = c,
+			fmt = fmt,
+			fmta = fmta,
+			rep = rep,
+			ls = ls, -- Also pass the entire luasnip module
+			vim = vim, -- Pass vim module for vim.fn calls
+			require = require, -- Include the require function
+			get_visual = get_visual, -- Pass the get_visual function
+			tex = tex, -- Pass the tex table with its functions
+			helpers = helpers, -- Pass helpers
+			-- Add standard Lua functions
+			pairs = pairs,
+			ipairs = ipairs,
+			next = next,
+			type = type,
+			tostring = tostring,
+			tonumber = tonumber,
+			table = table,
+			string = string,
+			math = math,
+			print = print,
+			error = error,
+			assert = assert,
+		}
+		-- Set the environment's metatable to fall back to the global environment
+		setmetatable(env, { __index = _G })
 
-        -- Load the file in this environment
-        local fn = vim.fn
-        local config_path = fn.stdpath('config')
-        local chunk, err = loadfile(config_path .. "/snippets/tex/" .. file .. ".lua", "t", env)
-        if chunk then
-            return chunk()
-        else
-            error(err)
-        end
-    end)
-    if status then
-        return snippets
-    else
-        print("Error loading " .. file .. ".lua: " .. snippets)
-        return {}
-    end
+		-- Load the file in this environment - remove mode restriction
+		local fn = vim.fn
+		local config_path = fn.stdpath("config")
+		local chunk, err = loadfile(config_path .. "/snippets/tex/" .. file .. ".lua", nil, env)
+		if chunk then
+			return chunk()
+		else
+			error(err)
+		end
+	end)
+	if status then
+		return snippets or {}
+	else
+		print("Error loading " .. file .. ".lua: " .. snippets)
+		return {}
+	end
 end
 
 -- Load all snippet files
@@ -70,20 +96,31 @@ local tmp = load_snippets("tmp")
 -- Combine all snippets
 local snippets = {}
 for _, snip_table in ipairs({
-    delimiter, environments, fonts, greek, luatex,
-    math, static, system, test, tmp
+	delimiter,
+	environments,
+	fonts,
+	greek,
+	luatex,
+	math,
+	static,
+	system,
+	test,
+	tmp,
 }) do
-    for _, snip in ipairs(snip_table) do
-        table.insert(snippets, snip)
-    end
+	for _, snip in ipairs(snip_table) do
+		table.insert(snippets, snip)
+	end
 end
 
 -- You can add any additional snippets directly in tex.lua if you want
-table.insert(snippets, s("texmain", {
-    t("\\documentclass{article}\n\\begin{document}\n\n"),
-    i(1),
-    t("\n\n\\end{document}")
-}))
+table.insert(
+	snippets,
+	s("texmain", {
+		t("\\documentclass{article}\n\\begin{document}\n\n"),
+		i(1),
+		t("\n\n\\end{document}"),
+	})
+)
 
 -- Return the snippets for use by LuaSnip's loader
 return snippets
