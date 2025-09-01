@@ -506,6 +506,21 @@ return {
 		lazy = true,
 	},
 
+	-- nvim-conv - Multipurpose numeric conversion tool
+	{
+		"simonefranza/nvim-conv",
+		cmd = {
+			"ConvDec", "ConvHex", "ConvOct", "ConvBin",
+			"ConvStr", "ConvBytes", "ConvFarenheit", "ConvCelsius",
+			"ConvDataTransRate", "ConvMetricImperial", "ConvColor",
+			"ConvSetPrecision"
+		},
+		config = function()
+			-- Set default precision to 4 decimal places
+			vim.g.conv_precision = 4
+		end,
+	},
+
 	-- Markdown Preview
 	-- install with yarn or npm
 	{

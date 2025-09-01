@@ -376,6 +376,7 @@ return {
 				},
 				copilot = {
 					model = "claude-sonnet-4",
+					allow_insecure = true, -- Fix for SSL certificate issues in corporate environments
 					-- thinking = {
 					--   type = "enabled";
 					--   budget_tokens = 2048;

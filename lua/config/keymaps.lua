@@ -184,9 +184,3 @@ desc_map("n", "<Leader>tn", ":TemporaryNotes<CR>", "Open temporary notes")
 desc_map("n", "<Leader>rn", ":RandomNote<CR>", "Create random note")
 desc_map("n", "<Leader>ns", ":SearchNotes<CR>", "Search in notes")
 desc_map("n", "<Leader>ng", ":GrepRandomNotes<CR>", "Grep random notes")
-
--- Avante window resize
-desc_map("n", "<Leader>a[", "", "Avante: Decrease width")
-desc_map("n", "<Leader>a]", "", "Avante: Increase width")
-desc_map("n", "<Leader>a-", "", "Avante: Decrease height")
-desc_map("n", "<Leader>a=", "", "Avante: Increase height")
