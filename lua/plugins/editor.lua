@@ -152,13 +152,7 @@ return {
 			vim.g.rooter_patterns = { ".git", "Makefile", "package.json", ".root", "build/env.sh" }
 			vim.g.rooter_manual_only = 1
 
-			-- Keymapping
-			vim.keymap.set(
-				"",
-				"<Leader>tr",
-				"<Cmd>Rooter<CR>",
-				{ noremap = true, silent = true, desc = "Change to project root" }
-			)
+			-- Keymapping moved to main keymaps.lua for better organization
 		end,
 	},
 
@@ -204,45 +198,7 @@ return {
 				end
 			end
 
-			-- Keymappings
-			vim.keymap.set(
-				"n",
-				"<space>ts",
-				require("telescope").extensions.toggletasks.spawn,
-				{ desc = "Tasks: Open task picker" }
-			)
-
-			-- Run all tasks with the #serve tag
-			vim.keymap.set("n", "<Leader>ts", function()
-				vim.cmd("Rooter") -- switch to project root directory
-				spawn_tasks_with_tag("serve")
-				vim.cmd("wincmd k") -- Return cursor to original window
-				vim.cmd("stopinsert") -- Return to normal mode
-			end, { desc = "Tasks: Run serve tasks" })
-
-			-- Run all tasks with the #run tag
-			vim.keymap.set("n", "<Leader>tp", function()
-				vim.cmd("Rooter") -- switch to project root directory
-				spawn_tasks_with_tag("run")
-				vim.cmd("wincmd k") -- Return cursor to original window
-				vim.cmd("stopinsert") -- Return to normal mode
-			end, { desc = "Tasks: Run run tasks" })
-
-			-- Run all tasks with the #build tag
-			vim.keymap.set("n", "<Leader>to", function()
-				vim.cmd("Rooter") -- switch to project root directory
-				spawn_tasks_with_tag("build")
-				vim.cmd("wincmd k") -- Return cursor to original window
-				vim.cmd("stopinsert") -- Return to normal mode
-			end, { desc = "Tasks: Run build tasks" })
-
-			-- Run all tasks with the #view tag
-			vim.keymap.set("n", "<Leader>ti", function()
-				vim.cmd("Rooter") -- switch to project root directory
-				spawn_tasks_with_tag("view")
-				vim.cmd("wincmd k") -- Return cursor to original window
-				vim.cmd("stopinsert") -- Return to normal mode
-			end, { desc = "Tasks: Run view tasks" })
+			-- Keymappings moved to main keymaps.lua for better organization
 		end,
 	},
 
@@ -256,25 +212,7 @@ return {
 				open_mapping = [[<c-\>]], -- or { [[<c-\>]], [[<c-¥>]] } if you also use a Japanese keyboard.
 			})
 
-			-- Keymappings
-			vim.keymap.set(
-				"n",
-				"<Leader>tt",
-				"<Cmd>ToggleTerm<CR>",
-				{ noremap = true, silent = true, desc = "Toggle terminal" }
-			)
-			vim.keymap.set(
-				"n",
-				"<Leader>t1",
-				"<Cmd>1ToggleTerm<CR>",
-				{ noremap = true, silent = true, desc = "Toggle terminal 1" }
-			)
-			vim.keymap.set(
-				"n",
-				"<Leader>t2",
-				"<Cmd>2ToggleTerm<CR>",
-				{ noremap = true, silent = true, desc = "Toggle terminal 2" }
-			)
+			-- Keymappings moved to main keymaps.lua for better organization
 		end,
 	},
 
@@ -282,14 +220,9 @@ return {
 	{
 		"junegunn/vim-easy-align",
 		config = function()
-			-- Start interactive EasyAlign in visual mode (e.g. vipga)
-			vim.keymap.set("x", "ga", "<Plug>(EasyAlign)", { desc = "EasyAlign in visual mode" })
-
-			-- Start interactive EasyAlign for a motion/text object (e.g. gaip)
-			vim.keymap.set("n", "ga", "<Plug>(EasyAlign)", { desc = "EasyAlign for motion" })
+			-- Keymaps moved to main keymaps.lua for better organization
 		end,
 	},
-
 
 	-- Indent guides: Show indentation levels with lines
 	{
@@ -360,7 +293,6 @@ return {
 			}
 		end,
 	},
-
 
 	-- Matchup: Enhanced % matching
 	{

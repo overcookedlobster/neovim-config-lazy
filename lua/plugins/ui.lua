@@ -16,6 +16,118 @@ return {
 				-- your configuration comes here
 				-- or leave it empty to use the default settings
 			})
+
+			-- Define leader key groups for better organization
+			wk.add({
+				-- AI operations (Avante) - <leader>a reserved for Avante
+				{ "<leader>a", group = "AI (Avante)" },
+
+				-- Buffer operations
+				{ "<leader>b", group = "Buffers" },
+
+				-- Code/Config operations
+				{ "<leader>c", group = "Code/Config" },
+
+				-- Explorer (single key)
+				{ "<leader>e", desc = "Explorer: Toggle NvimTree" },
+
+				-- File operations
+				{ "<leader>f", group = "Files" },
+
+				-- Git operations
+				{ "<leader>g", group = "Git" },
+
+				-- Notes operations
+				{ "<leader>n", group = "Notes" },
+
+				-- OpenCode AI operations
+				{ "<leader>o", group = "OpenCode AI" },
+
+				-- AI operations (Parrot) - moved to <leader>p to avoid conflict
+				{ "<leader>p", group = "AI (Parrot)" },
+
+				-- Search operations (Telescope)
+				{ "<leader>s", group = "Search (Telescope)" },
+
+				-- Tab operations
+				{ "<leader>t", group = "Tabs/Tasks/Terminal" },
+
+				-- Window operations
+				{ "<leader>w", group = "Windows" },
+
+				-- Diagnostics/Trouble
+				{ "<leader>x", group = "Diagnostics" },
+			})
+
+			-- Filetype-specific which-key groups
+			-- TeX/LaTeX specific keymaps (only active when editing .tex files)
+			vim.api.nvim_create_autocmd("FileType", {
+				pattern = "tex",
+				callback = function()
+					wk.add({
+						-- LaTeX group with intuitive <leader>l prefix
+						{ "<leader>l", group = "LaTeX", buffer = 0 },
+						{ "<leader>lc", desc = "LaTeX: Compile document", buffer = 0 },
+						{ "<leader>lr", desc = "LaTeX: Recompile document", buffer = 0 },
+						{ "<leader>lv", desc = "LaTeX: View PDF", buffer = 0 },
+						{ "<leader>li", desc = "LaTeX: Show info", buffer = 0 },
+						{ "<leader>lt", desc = "LaTeX: Toggle table of contents", buffer = 0 },
+						{ "<leader>le", desc = "LaTeX: Toggle shell escape", buffer = 0 },
+						{ "<leader>lk", desc = "LaTeX: Stop compilation", buffer = 0 },
+						{ "<leader>ll", desc = "LaTeX: Start continuous compilation", buffer = 0 },
+						{ "<leader>lx", desc = "LaTeX: Clean auxiliary files", buffer = 0 },
+						{ "<leader>lX", desc = "LaTeX: Clean all files", buffer = 0 },
+						{ "<leader>ls", desc = "LaTeX: Show status", buffer = 0 },
+						{ "<leader>lg", desc = "LaTeX: Show log", buffer = 0 },
+
+						-- TeX text object operations
+						{ "ds", group = "Delete Surrounding (TeX)", buffer = 0 },
+						{ "dse", desc = "TeX: Delete surrounding environment", buffer = 0 },
+						{ "dsc", desc = "TeX: Delete surrounding command", buffer = 0 },
+						{ "dsm", desc = "TeX: Delete surrounding math", buffer = 0 },
+						{ "dsd", desc = "TeX: Delete surrounding delimiters", buffer = 0 },
+
+						{ "cs", group = "Change Surrounding (TeX)", buffer = 0 },
+						{ "cse", desc = "TeX: Change surrounding environment", buffer = 0 },
+						{ "csc", desc = "TeX: Change surrounding command", buffer = 0 },
+						{ "csm", desc = "TeX: Change surrounding math", buffer = 0 },
+						{ "csd", desc = "TeX: Change surrounding delimiters", buffer = 0 },
+
+						{ "ts", group = "Toggle (TeX)", buffer = 0 },
+						{ "tsf", desc = "TeX: Toggle fraction command", buffer = 0 },
+						{ "tsc", desc = "TeX: Toggle command star", buffer = 0 },
+						{ "tse", desc = "TeX: Toggle environment star", buffer = 0 },
+						{ "tsd", desc = "TeX: Toggle delimiter modifier", buffer = 0 },
+						{ "tsD", desc = "TeX: Toggle delimiter modifier (reverse)", buffer = 0 },
+						{ "tsm", desc = "TeX: Toggle math environment", buffer = 0 },
+
+						-- TeX motions
+						{ "]", group = "Next (TeX)", buffer = 0 },
+						{ "]]", desc = "TeX: Next section start", buffer = 0 },
+						{ "][", desc = "TeX: Next section end", buffer = 0 },
+						{ "]m", desc = "TeX: Next section", buffer = 0 },
+						{ "]M", desc = "TeX: Next section end", buffer = 0 },
+						{ "]n", desc = "TeX: Next environment", buffer = 0 },
+						{ "]N", desc = "TeX: Next environment end", buffer = 0 },
+						{ "]r", desc = "TeX: Next item", buffer = 0 },
+						{ "]R", desc = "TeX: Next item end", buffer = 0 },
+						{ "]/", desc = "TeX: Next comment", buffer = 0 },
+						{ "]*", desc = "TeX: Next comment end", buffer = 0 },
+
+						{ "[", group = "Previous (TeX)", buffer = 0 },
+						{ "[]", desc = "TeX: Previous section end", buffer = 0 },
+						{ "[[", desc = "TeX: Previous section start", buffer = 0 },
+						{ "[m", desc = "TeX: Previous section", buffer = 0 },
+						{ "[M", desc = "TeX: Previous section end", buffer = 0 },
+						{ "[n", desc = "TeX: Previous environment", buffer = 0 },
+						{ "[N", desc = "TeX: Previous environment end", buffer = 0 },
+						{ "[r", desc = "TeX: Previous item", buffer = 0 },
+						{ "[R", desc = "TeX: Previous item end", buffer = 0 },
+						{ "[/", desc = "TeX: Previous comment", buffer = 0 },
+						{ "[*", desc = "TeX: Previous comment end", buffer = 0 },
+					})
+				end,
+			})
 		end,
 	},
 	-- Colorscheme: Gruvbox Material
@@ -184,13 +296,7 @@ return {
 				-- Default configuration
 			})
 
-			-- Keymaps
-			vim.keymap.set(
-				"n",
-				"<leader>xx",
-				"<cmd>Trouble<cr>",
-				{ silent = true, noremap = true, desc = "Trouble: Open diagnostics" }
-			)
+			-- Keymaps moved to main keymaps.lua for better organization
 		end,
 	},
 
