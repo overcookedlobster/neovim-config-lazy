@@ -307,6 +307,7 @@ desc_map("n", "<Leader>pf", ":ChatFind<CR>", "AI: Find chats (Parrot)")
 desc_map("n", "<Leader>pm", ":PrtModel<CR>", "AI: Model selection (Parrot)")
 desc_map("n", "<Leader>pt", ":PrtThinking<CR>", "AI: Enable thinking (Parrot)")
 desc_map("n", "<Leader>ps", ":PrtThinking status<CR>", "AI: Thinking status (Parrot)")
+desc_map("n", "<Leader>px", ":PrtChatStop<CR>", "AI: Stop chat (Parrot)")
 
 -- AI Visual mode shortcuts (Parrot) - Using <C-p> to avoid conflict with Avante
 local function keymapOptions(desc)
