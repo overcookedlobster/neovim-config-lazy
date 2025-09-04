@@ -35,7 +35,7 @@ return {
 				enable = true, -- Enable TreeSitter highlighting
 
 				-- Disable highlighting for specific filetypes
-				disable = {},
+				disable = { "fortran" },
 
 				-- Setting this to true will run `:h syntax` and tree-sitter at the same time.
 				-- Using this option may slow down your editor, and you may see duplicate highlights.
@@ -46,7 +46,6 @@ return {
 				enable = true, -- Enable TreeSitter-based indentation
 				disable = { "tex" }, -- Disable TS indentation for tex files as VimTeX handles this better
 			},
-
 		})
 	end,
 }

@@ -329,8 +329,8 @@ return {
 		opts = {
 			-- add any opts here
 			-- for example
-			provider = "copilot",
-			auto_suggestions_provider = "copilot",
+			provider = "igpt", -- Changed from copilot to igpt since copilot is disabled
+			auto_suggestions_provider = "igpt", -- Changed from copilot to igpt
 			-- RAG Service Configuration
 			rag_service = {
 				enabled = true, -- Enable RAG service
@@ -367,16 +367,21 @@ return {
 				docker_extra_args = "--network=host", -- Additional Docker arguments if needed
 			},
 			providers = {
+				-- Explicitly disable copilot provider to prevent SSL errors
+				copilot = {
+					enabled = false, -- Disable copilot provider
+					list_models = function()
+						return {}
+					end, -- Return empty model list
+					parse_response = function()
+						return ""
+					end, -- Dummy response parser
+					parse_stream_data = function()
+						return ""
+					end, -- Dummy stream parser
+				},
 				claude = {
 					model = "claude-4-sonnet",
-					-- thinking = {
-					--   type = "enabled";
-					--   budget_tokens = 2048;
-					-- }
-				},
-				copilot = {
-					model = "claude-sonnet-4",
-					allow_insecure = true, -- Fix for SSL certificate issues in corporate environments
 					-- thinking = {
 					--   type = "enabled";
 					--   budget_tokens = 2048;
@@ -472,61 +477,61 @@ return {
 			"hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
 			"ibhagwan/fzf-lua", -- for file_selector provider fzf
 			"nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
-			-- GitHub Copilot
-			{
-				"zbirenbaum/copilot.lua",
-				cmd = "Copilot",
-				event = "InsertEnter",
-				config = function()
-					require("copilot").setup({
-						panel = {
-							enabled = true,
-							auto_refresh = true,
-							keymap = {
-								jump_prev = "[[",
-								jump_next = "]]",
-								accept = "<CR>",
-								refresh = "gr",
-								open = "<M-CR>",
-							},
-							layout = {
-								position = "bottom", -- | top | left | right
-								ratio = 0.4,
-							},
-						},
-						suggestion = {
-							enabled = false,
-							auto_trigger = true,
-							debounce = 75,
-							keymap = {
-								accept = "<M-l>",
-								accept_word = "<M-w>",
-								accept_line = "<M-j>",
-								next = "<M-]>",
-								prev = "<M-[>",
-								dismiss = "<C-]>",
-							},
-						},
-						filetypes = {
-							markdown = true,
-							help = false,
-							gitcommit = false,
-							gitrebase = false,
-							["."] = false,
-						},
-						copilot_node_command = "node", -- Node.js version must be > 18
-						server_opts_overrides = {
-							trace = "verbose",
-							settings = {
-								advanced = {
-									listCount = 10, -- #completions for panel
-									inlineSuggestCount = 3, -- #completions for getCompletions
-								},
-							},
-						},
-					})
-				end,
-			},
+			-- GitHub Copilot - DISABLED due to company restrictions
+			-- {
+			-- 	"zbirenbaum/copilot.lua",
+			-- 	cmd = "Copilot",
+			-- 	event = "InsertEnter",
+			-- 	config = function()
+			-- 		require("copilot").setup({
+			-- 			panel = {
+			-- 				enabled = true,
+			-- 				auto_refresh = true,
+			-- 				keymap = {
+			-- 					jump_prev = "[[",
+			-- 					jump_next = "]]",
+			-- 					accept = "<CR>",
+			-- 					refresh = "gr",
+			-- 					open = "<M-CR>",
+			-- 				},
+			-- 				layout = {
+			-- 					position = "bottom", -- | top | left | right
+			-- 					ratio = 0.4,
+			-- 				},
+			-- 			},
+			-- 			suggestion = {
+			-- 				enabled = false,
+			-- 				auto_trigger = true,
+			-- 				debounce = 75,
+			-- 				keymap = {
+			-- 					accept = "<M-l>",
+			-- 					accept_word = "<M-w>",
+			-- 					accept_line = "<M-j>",
+			-- 					next = "<M-]>",
+			-- 					prev = "<M-[>",
+			-- 					dismiss = "<C-]>",
+			-- 				},
+			-- 			},
+			-- 			filetypes = {
+			-- 				markdown = true,
+			-- 				help = false,
+			-- 				gitcommit = false,
+			-- 				gitrebase = false,
+			-- 				["."] = false,
+			-- 			},
+			-- 			copilot_node_command = "node", -- Node.js version must be > 18
+			-- 			server_opts_overrides = {
+			-- 				trace = "verbose",
+			-- 				settings = {
+			-- 					advanced = {
+			-- 						listCount = 10, -- #completions for panel
+			-- 						inlineSuggestCount = 3, -- #completions for getCompletions
+			-- 					},
+			-- 				},
+			-- 			},
+			-- 		})
+			-- 	end,
+			-- },
 			{
 				-- support for image pasting
 				"HakonHarnes/img-clip.nvim",
