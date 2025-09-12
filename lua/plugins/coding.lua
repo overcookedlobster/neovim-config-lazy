@@ -333,7 +333,7 @@ return {
 			auto_suggestions_provider = "igpt", -- Changed from copilot to igpt
 			-- RAG Service Configuration
 			rag_service = {
-				enabled = true, -- Enable RAG service
+				enabled = false, -- Enable RAG service
 				host_mount = os.getenv("HOME"), -- Mount home directory for file access
 				-- host_mount = vim.fn.expand("~/RAG"), -- Mount RAG directory for file access
 				runner = "docker", -- Use Docker to run RAG service

@@ -298,7 +298,74 @@ vim.api.nvim_create_user_command("ChatFind", function()
 	})
 end, { desc = "Find and open parrot chat files" })
 
--- AI (Parrot) - Using <Leader>p to avoid conflict with Avante's <Leader>a
+-- ============================================================================
+-- AI OPERATIONS
+-- ============================================================================
+
+-- AI (Avante) - Primary AI assistant using <Leader>a
+desc_map("n", "<Leader>aa", ":AvanteAsk<CR>", "AI: Ask Avante")
+desc_map("n", "<Leader>ac", ":AvanteChat<CR>", "AI: Chat with Avante")
+desc_map("n", "<Leader>ae", ":AvanteEdit<CR>", "AI: Edit with Avante")
+desc_map("n", "<Leader>at", ":AvanteToggle<CR>", "AI: Toggle Avante panel")
+desc_map("n", "<Leader>ar", ":AvanteRefresh<CR>", "AI: Refresh Avante")
+desc_map("n", "<Leader>ax", ":AvanteClear<CR>", "AI: Clear Avante session")
+desc_map("n", "<Leader>ap", ":AvanteProvider<CR>", "AI: Switch Avante provider")
+desc_map("n", "<Leader>am", ":AvanteModel<CR>", "AI: Switch Avante model")
+desc_map("n", "<Leader>al", ":AvanteConversationLoad<CR>", "AI: Load Avante conversation")
+desc_map("n", "<Leader>as", ":AvanteConversationSave<CR>", "AI: Save Avante conversation")
+desc_map("n", "<Leader>ad", ":AvanteConversationDelete<CR>", "AI: Delete Avante conversation")
+
+-- Avante History operations (using telescope for file browsing since no specific history commands exist)
+desc_map("n", "<Leader>ahl", function()
+	local avante_dir = vim.fn.stdpath("data") .. "/avante"
+	if vim.fn.isdirectory(avante_dir) == 1 then
+		require("telescope.builtin").find_files({
+			prompt_title = "Avante Conversation History",
+			cwd = avante_dir,
+			find_command = { "find", avante_dir, "-type", "f", "-name", "*.md" },
+		})
+	else
+		vim.notify("Avante data directory not found", vim.log.levels.WARN)
+	end
+end, "AI: List Avante conversation history")
+
+desc_map("n", "<Leader>ahs", function()
+	local avante_dir = vim.fn.stdpath("data") .. "/avante"
+	if vim.fn.isdirectory(avante_dir) == 1 then
+		require("telescope.builtin").live_grep({
+			prompt_title = "Search Avante Conversations",
+			cwd = avante_dir,
+		})
+	else
+		vim.notify("Avante data directory not found", vim.log.levels.WARN)
+	end
+end, "AI: Search Avante conversation history")
+
+desc_map("n", "<Leader>ahc", function()
+	local avante_dir = vim.fn.stdpath("data") .. "/avante"
+	if vim.fn.isdirectory(avante_dir) == 1 then
+		local choice = vim.fn.confirm("Clear all Avante conversation history?", "&Yes\n&No", 2)
+		if choice == 1 then
+			vim.fn.system("rm -rf " .. vim.fn.shellescape(avante_dir) .. "/*")
+			vim.notify("Avante conversation history cleared", vim.log.levels.INFO)
+		end
+	else
+		vim.notify("Avante data directory not found", vim.log.levels.WARN)
+	end
+end, "AI: Clear Avante conversation history")
+
+desc_map("n", "<Leader>ahe", function()
+	local avante_dir = vim.fn.stdpath("data") .. "/avante"
+	if vim.fn.isdirectory(avante_dir) == 1 then
+		local export_dir = vim.fn.expand("~/avante_export_" .. os.date("%Y%m%d_%H%M%S"))
+		vim.fn.system("cp -r " .. vim.fn.shellescape(avante_dir) .. " " .. vim.fn.shellescape(export_dir))
+		vim.notify("Avante conversations exported to: " .. export_dir, vim.log.levels.INFO)
+	else
+		vim.notify("Avante data directory not found", vim.log.levels.WARN)
+	end
+end, "AI: Export Avante conversation history")
+
+-- AI (Parrot) - Secondary AI assistant using <Leader>p to avoid conflict with Avante's <Leader>a
 desc_map("n", "<Leader>pr", ":PrtChatResponde<CR>", "AI: Chat respond (Parrot)")
 desc_map("n", "<Leader>pn", ":PrtChatNew<CR>", "AI: New chat (Parrot)")
 desc_map("n", "<Leader>pp", ":PrtProvider<CR>", "AI: Provider selection (Parrot)")
@@ -381,7 +448,344 @@ end, "Spell: Show spelling suggestions")
 
 -- Thesaurus operations
 desc_map("n", "<Leader>zr", ":ThesaurusQueryReplaceCurrentWord<CR>", "Thesaurus: Replace current word with synonym")
+
+-- ============================================================================
+-- ADDITIONAL UNMAPPED PLUGIN FUNCTIONS
+-- ============================================================================
+
+-- LeetCode keymaps (using :Leet command)
+desc_map("n", "<Leader>Ll", ":Leet list<CR>", "LeetCode: List problems")
+desc_map("n", "<Leader>Lr", ":Leet run<CR>", "LeetCode: Run code")
+desc_map("n", "<Leader>Ls", ":Leet submit<CR>", "LeetCode: Submit")
+desc_map("n", "<Leader>Lt", ":Leet test<CR>", "LeetCode: Test")
+desc_map("n", "<Leader>Li", ":Leet info<CR>", "LeetCode: Problem info")
+desc_map("n", "<Leader>Ld", ":Leet daily<CR>", "LeetCode: Daily problem")
+desc_map("n", "<Leader>Lc", ":Leet console<CR>", "LeetCode: Console toggle")
+desc_map("n", "<Leader>Lm", ":Leet menu<CR>", "LeetCode: Menu")
+desc_map("n", "<Leader>Lo", ":Leet open<CR>", "LeetCode: Open problem")
+desc_map("n", "<Leader>Lp", ":Leet pick<CR>", "LeetCode: Pick problem")
+desc_map("n", "<Leader>Lq", ":Leet close<CR>", "LeetCode: Close")
+
+-- Mason/Tools management
+desc_map("n", "<Leader>mm", ":Mason<CR>", "Mason: Open Mason")
+desc_map("n", "<Leader>mu", ":MasonUpdate<CR>", "Mason: Update all")
+desc_map("n", "<Leader>mi", ":MasonInstall ", "Mason: Install package")
+desc_map("n", "<Leader>ml", ":Lint<CR>", "Lint: Run linter")
+desc_map("n", "<Leader>mf", function()
+	require("conform").format({ async = true, lsp_fallback = true })
+end, "Format: Format buffer")
+
+-- Numeric conversion utilities (nvim-conv)
+desc_map("n", "<Leader>ucd", ":ConvDec<CR>", "Convert: To decimal")
+desc_map("n", "<Leader>uch", ":ConvHex<CR>", "Convert: To hexadecimal")
+desc_map("n", "<Leader>uco", ":ConvOct<CR>", "Convert: To octal")
+desc_map("n", "<Leader>ucb", ":ConvBin<CR>", "Convert: To binary")
+desc_map("n", "<Leader>ucs", ":ConvStr<CR>", "Convert: To string")
+desc_map("n", "<Leader>ucB", ":ConvBytes<CR>", "Convert: Bytes")
+desc_map("n", "<Leader>ucf", ":ConvFarenheit<CR>", "Convert: Fahrenheit")
+desc_map("n", "<Leader>ucC", ":ConvCelsius<CR>", "Convert: Celsius")
+
+-- Clipboard image utilities
+desc_map("n", "<Leader>ui", function()
+	require("clipboard-image").paste_img()
+end, "Utilities: Paste image from clipboard")
+
+-- Jupyter (Jukit) operations
+desc_map("n", "<Leader>ujs", ":call jukit#splits#output()<CR>", "Jukit: Start output split")
+desc_map("n", "<Leader>ujr", ":call jukit#send#section(0)<CR>", "Jukit: Run current cell")
+desc_map("n", "<Leader>ujR", ":call jukit#send#all()<CR>", "Jukit: Run all cells")
+desc_map("n", "<Leader>ujd", ":call jukit#cells#delete()<CR>", "Jukit: Delete current cell")
+desc_map("n", "<Leader>ujc", ":call jukit#cells#create_below(0)<CR>", "Jukit: Create new cell")
+
+-- Ouroboros (file navigation)
+desc_map("n", "<Leader>jh", function()
+	require("ouroboros").switch()
+end, "Jump: Switch to header/source")
+desc_map("n", "<Leader>jf", function()
+	require("ouroboros").find_related()
+end, "Jump: Find related files")
+
+-- ToggleTasks (project task management)
+desc_map("n", "<Leader>tT", ":Telescope toggletasks<CR>", "Tasks: Toggle tasks")
+desc_map("n", "<Leader>ts", function()
+	require("toggletasks").spawn_by_name("serve")
+end, "Tasks: Start serve task")
+desc_map("n", "<Leader>tb", function()
+	require("toggletasks").spawn_by_name("build")
+end, "Tasks: Start build task")
+desc_map("n", "<Leader>td", function()
+	require("toggletasks").spawn_by_name("dev")
+end, "Tasks: Start dev task")
+
+-- Markdown Preview
+desc_map("n", "<Leader>cm", ":MarkdownPreview<CR>", "Code: Markdown preview")
+desc_map("n", "<Leader>cM", ":MarkdownPreviewStop<CR>", "Code: Stop markdown preview")
+
+-- Help/Documentation shortcuts
+desc_map("n", "<Leader>hm", ":Mason<CR>", "Help: Open Mason")
+desc_map("n", "<Leader>hM", ":MasonUpdate<CR>", "Help: Mason update")
+desc_map("n", "<Leader>hi", ":MasonInstall ", "Help: Mason install")
+desc_map("n", "<Leader>hc", ":ConformInfo<CR>", "Help: ConformInfo")
+desc_map("n", "<Leader>hl", ":LspInfo<CR>", "Help: LspInfo")
+desc_map("n", "<Leader>hr", ":LspRestart<CR>", "Help: LspRestart")
+
+-- ============================================================================
+-- THEME SWITCHING (Using Themery.nvim)
+-- ============================================================================
+
+-- Main theme picker with live preview and persistence
+desc_map("n", "<Leader>ut", ":Themery<CR>", "UI: Theme picker (Themery)")
+
+-- Quick theme switching functions using Themery API
+local function quick_switch_theme(theme_name)
+	local themery_ok, themery = pcall(require, "themery")
+	if not themery_ok then
+		vim.notify("Themery not available", vim.log.levels.ERROR)
+		return
+	end
+
+	local success, error_msg = pcall(function()
+		themery.setThemeByName(theme_name, true) -- true = make persistent
+	end)
+
+	if not success then
+		vim.notify(
+			"Failed to switch to theme: " .. theme_name .. "\nError: " .. tostring(error_msg),
+			vim.log.levels.ERROR
+		)
+	else
+		vim.notify("Switched to: " .. theme_name, vim.log.levels.INFO)
+	end
+end
+
+-- Get available themes and find by colorscheme
+local function switch_by_colorscheme(colorscheme_name)
+	local themery_ok, themery = pcall(require, "themery")
+	if not themery_ok then
+		vim.notify("Themery not available", vim.log.levels.ERROR)
+		return
+	end
+
+	local themes = themery.getAvailableThemes()
+	if not themes then
+		vim.notify("No themes available", vim.log.levels.ERROR)
+		return
+	end
+
+	for _, theme in ipairs(themes) do
+		if theme.colorscheme == colorscheme_name then
+			quick_switch_theme(theme.name)
+			return
+		end
+	end
+
+	vim.notify("Theme with colorscheme '" .. colorscheme_name .. "' not found", vim.log.levels.WARN)
+end
+
+-- Quick theme shortcuts (most popular themes) - using colorscheme names for reliability
+desc_map("n", "<Leader>ug", function()
+	switch_by_colorscheme("gruvbox-material")
+end, "UI: Gruvbox Material theme")
+
+desc_map("n", "<Leader>ut1", function()
+	switch_by_colorscheme("tokyonight")
+end, "UI: Tokyo Night theme")
+
+desc_map("n", "<Leader>ut2", function()
+	switch_by_colorscheme("catppuccin-mocha")
+end, "UI: Catppuccin Mocha theme")
+
+desc_map("n", "<Leader>ut3", function()
+	switch_by_colorscheme("rose-pine")
+end, "UI: Rose Pine theme")
+
+desc_map("n", "<Leader>ut4", function()
+	switch_by_colorscheme("kanagawa-wave")
+end, "UI: Kanagawa Wave theme")
+
+desc_map("n", "<Leader>ut5", function()
+	switch_by_colorscheme("nightfox")
+end, "UI: Nightfox theme")
+
+desc_map("n", "<Leader>ut6", function()
+	switch_by_colorscheme("vscode")
+end, "UI: VSCode theme")
+
+desc_map("n", "<Leader>ut7", function()
+	switch_by_colorscheme("onedark")
+end, "UI: OneDark theme")
+
+desc_map("n", "<Leader>ut8", function()
+	switch_by_colorscheme("material")
+end, "UI: Material theme")
+
+desc_map("n", "<Leader>ut9", function()
+	switch_by_colorscheme("github_dark")
+end, "UI: GitHub Dark theme")
+
+-- Improved Light/Dark mode toggle with better theme family detection
+desc_map("n", "<Leader>utt", function()
+	local themery_ok, themery = pcall(require, "themery")
+	if not themery_ok then
+		vim.notify("Themery not available", vim.log.levels.ERROR)
+		return
+	end
+
+	local current_colorscheme = vim.g.colors_name or ""
+	local themes = themery.getAvailableThemes()
+
+	if not themes then
+		vim.notify("No themes available", vim.log.levels.ERROR)
+		return
+	end
+
+	-- Define theme families with their light/dark pairs
+	local theme_pairs = {
+		-- Tokyo Night family
+		["tokyonight"] = "tokyonight-day",
+		["tokyonight-storm"] = "tokyonight-day",
+		["tokyonight-moon"] = "tokyonight-day",
+		["tokyonight-day"] = "tokyonight",
+
+		-- Catppuccin family
+		["catppuccin-mocha"] = "catppuccin-latte",
+		["catppuccin-frappe"] = "catppuccin-latte",
+		["catppuccin-macchiato"] = "catppuccin-latte",
+		["catppuccin-latte"] = "catppuccin-mocha",
+
+		-- Rose Pine family
+		["rose-pine"] = "rose-pine-dawn",
+		["rose-pine-moon"] = "rose-pine-dawn",
+		["rose-pine-dawn"] = "rose-pine",
+
+		-- Kanagawa family
+		["kanagawa-wave"] = "kanagawa-lotus",
+		["kanagawa-dragon"] = "kanagawa-lotus",
+		["kanagawa-lotus"] = "kanagawa-wave",
+
+		-- GitHub family
+		["github_dark"] = "github_light",
+		["github_dark_dimmed"] = "github_light",
+		["github_dark_high_contrast"] = "github_light_high_contrast",
+		["github_light"] = "github_dark",
+		["github_light_high_contrast"] = "github_dark_high_contrast",
+
+		-- Nightfox family
+		["nightfox"] = "dawnfox",
+		["carbonfox"] = "dawnfox",
+		["duskfox"] = "dayfox",
+		["nordfox"] = "dawnfox",
+		["terafox"] = "dawnfox",
+		["dawnfox"] = "nightfox",
+		["dayfox"] = "duskfox",
+
+		-- Ayu family
+		["ayu-dark"] = "ayu-light",
+		["ayu-mirage"] = "ayu-light",
+		["ayu-light"] = "ayu-dark",
+
+		-- Material family
+		["material"] = "material",
+		["material-darker"] = "material",
+		["material-oceanic"] = "material",
+		["material-palenight"] = "material",
+		["material-deep-ocean"] = "material",
+
+		-- OneDark family
+		["onedark"] = "onedark",
+		["onedark_vivid"] = "onedark",
+		["onedark_dark"] = "onedark",
+
+		-- Default fallbacks
+		["gruvbox-material"] = "tokyonight-day",
+		["vscode"] = "github_light",
+	}
+
+	local target_colorscheme = theme_pairs[current_colorscheme]
+	if target_colorscheme then
+		switch_by_colorscheme(target_colorscheme)
+	else
+		-- Fallback to Tokyo Night if no pair found
+		switch_by_colorscheme("tokyonight")
+		vim.notify("No light/dark pair found for current theme, switched to Tokyo Night", vim.log.levels.INFO)
+	end
+end, "UI: Toggle light/dark theme")
+
+-- Show current theme info
+desc_map("n", "<Leader>uti", function()
+	local themery_ok, themery = pcall(require, "themery")
+	if not themery_ok then
+		vim.notify("Themery not available", vim.log.levels.ERROR)
+		return
+	end
+
+	local currentTheme = themery.getCurrentTheme()
+	local current_colorscheme = vim.g.colors_name or "none"
+
+	if currentTheme and currentTheme.name then
+		vim.notify(
+			"Current theme: " .. currentTheme.name .. "\nColorscheme: " .. current_colorscheme,
+			vim.log.levels.INFO
+		)
+	else
+		vim.notify("No theme selected\nColorscheme: " .. current_colorscheme, vim.log.levels.WARN)
+	end
+end, "UI: Show current theme info")
+
+-- Random theme selector
+desc_map("n", "<Leader>utr", function()
+	local themery_ok, themery = pcall(require, "themery")
+	if not themery_ok then
+		vim.notify("Themery not available", vim.log.levels.ERROR)
+		return
+	end
+
+	local themes = themery.getAvailableThemes()
+	if not themes or #themes == 0 then
+		vim.notify("No themes available", vim.log.levels.ERROR)
+		return
+	end
+
+	-- Get random theme
+	math.randomseed(os.time())
+	local random_theme = themes[math.random(#themes)]
+	quick_switch_theme(random_theme.name)
+end, "UI: Random theme")
+
+-- Cycle through favorite themes
+local favorite_themes = {
+	"tokyonight",
+	"catppuccin-mocha",
+	"rose-pine",
+	"kanagawa-wave",
+	"gruvbox-material",
+	"nightfox",
+}
+
+desc_map("n", "<Leader>utc", function()
+	local current_colorscheme = vim.g.colors_name or ""
+	local current_index = 1
+
+	-- Find current theme in favorites
+	for i, theme in ipairs(favorite_themes) do
+		if theme == current_colorscheme then
+			current_index = i
+			break
+		end
+	end
+
+	-- Get next theme (cycle back to 1 if at end)
+	local next_index = (current_index % #favorite_themes) + 1
+	switch_by_colorscheme(favorite_themes[next_index])
+end, "UI: Cycle favorite themes")
 desc_map("n", "<Leader>zl", ":ThesaurusQueryLookupCurrentWord<CR>", "Thesaurus: Lookup synonyms for current word")
+
+-- CSV Viewer (csvview.nvim)
+desc_map("n", "<Leader>cv", ":CsvViewToggle<CR>", "CSV: Toggle CSV view")
+desc_map("n", "<Leader>ce", ":CsvViewEnable<CR>", "CSV: Enable CSV view")
+desc_map("n", "<Leader>cd", ":CsvViewDisable<CR>", "CSV: Disable CSV view")
+desc_map("n", "<Leader>cb", ":CsvViewToggle display_mode=border<CR>", "CSV: Toggle with border mode")
+desc_map("n", "<Leader>ch", ":CsvViewToggle display_mode=highlight<CR>", "CSV: Toggle with highlight mode")
 
 -- Diagnostics (Trouble)
 desc_map("n", "<Leader>xx", ":Trouble<CR>", "Diagnostics: Open trouble (Trouble)")

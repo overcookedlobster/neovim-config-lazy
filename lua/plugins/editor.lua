@@ -82,41 +82,6 @@ return {
 		end,
 	},
 
-	-- CSV.vim: CSV file handling
-	{
-		"chrisbra/csv.vim",
-		ft = { "csv", "tsv" },
-		config = function()
-			-- Recognize .tsv files as CSV with tab delimiter
-			vim.g.csv_extensions = { "csv", "tsv" }
-
-			-- Set tab as the default delimiter for .tsv files
-			vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
-				pattern = "*.tsv",
-				callback = function()
-					vim.b.csv_delimiter = "\t"
-				end,
-			})
-
-			-- Create a command for non-.tsv files
-			vim.api.nvim_create_user_command("TSV", function()
-				vim.bo.filetype = "csv"
-				vim.b.csv_delimiter = "\t"
-			end, {})
-
-			-- Set up key mappings for CSV mode
-			vim.api.nvim_create_autocmd("FileType", {
-				pattern = "csv",
-				callback = function()
-					local opts = { noremap = true, silent = true, buffer = true }
-					vim.keymap.set("n", "<C-k>", "<Plug>CSV_KernelSort", opts)
-					vim.keymap.set("n", "<C-j>", "<Plug>CSV_WhatColumn", opts)
-					vim.keymap.set("n", "<C-h>", "<Plug>CSV_HiColumn", opts)
-					vim.keymap.set("n", "<C-l>", "<Plug>CSV_NrColumns", opts)
-				end,
-			})
-		end,
-	},
 
 	-- Ranger integration
 	{
