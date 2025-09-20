@@ -329,6 +329,7 @@ return {
 		opts = {
 			-- add any opts here
 			-- for example
+			instructions_file = "avante.md",
 			provider = "igpt", -- Changed from copilot to igpt since copilot is disabled
 			auto_suggestions_provider = "igpt", -- Changed from copilot to igpt
 			-- RAG Service Configuration
@@ -682,18 +683,19 @@ return {
 	-- LeetCode plugin
 	{
 		"kawre/leetcode.nvim",
-		-- build = ":TSUpdate html", -- if you have `nvim-treesitter` installed
+		build = ":TSUpdate html", -- Ensure HTML treesitter is installed
 		dependencies = {
 			"nvim-lua/plenary.nvim",
 			"MunifTanjim/nui.nvim",
 			"nvim-telescope/telescope.nvim", -- for picker
+			"nvim-treesitter/nvim-treesitter",
 		},
 		opts = {
 			-- Use argument-based startup
 			arg = "leetcode.nvim",
 
 			-- Default language
-			lang = "cpp",
+			lang = "python",
 
 			-- Storage configuration
 			storage = {
@@ -743,6 +745,11 @@ return {
 						return default_imports
 					end,
 				},
+				["c"] = {
+					imports = function()
+						return { "#include <stdio.h>", "#include <stdlib.h>", "#include <string.h>" }
+					end,
+				},
 			},
 
 			-- Editor settings
@@ -751,14 +758,41 @@ return {
 				fold_imports = true,
 			},
 
-			-- Enable logging
+			-- Enable logging for debugging
 			logging = true,
 
 			-- Cache settings
 			cache = {
 				update_interval = 60 * 60 * 24 * 7, -- 7 days
 			},
+
+			-- Authentication domain (use leetcode.com by default)
+			domain = "com", -- or "cn" for leetcode.cn
+
+			-- Hooks for better integration
+			hooks = {
+				["enter"] = {
+					function()
+						-- Ensure LeetCode commands are available
+						local leetcode = require("leetcode")
+						if leetcode.setup_cmds then
+							leetcode.setup_cmds()
+						end
+					end,
+				},
+			},
 		},
 		cmd = "Leet", -- Lazy load on command
+		config = function(_, opts)
+			require("leetcode").setup(opts)
+
+			-- Ensure commands are set up after plugin loads
+			vim.defer_fn(function()
+				local ok, leetcode = pcall(require, "leetcode")
+				if ok and leetcode.setup_cmds then
+					leetcode.setup_cmds()
+				end
+			end, 100)
+		end,
 	},
 }

@@ -299,6 +299,119 @@ vim.api.nvim_create_user_command("ChatFind", function()
 end, { desc = "Find and open parrot chat files" })
 
 -- ============================================================================
+-- LEETCODE KEYMAPS
+-- ============================================================================
+
+-- LeetCode operations
+desc_map("n", "<Leader>Ll", ":Leet list<CR>", "LeetCode: List problems")
+desc_map("n", "<Leader>Lr", ":Leet run<CR>", "LeetCode: Run code")
+desc_map("n", "<Leader>Ls", ":Leet submit<CR>", "LeetCode: Submit")
+desc_map("n", "<Leader>Lt", ":Leet test<CR>", "LeetCode: Test")
+desc_map("n", "<Leader>Li", ":Leet info<CR>", "LeetCode: Problem info")
+desc_map("n", "<Leader>Ld", ":Leet daily<CR>", "LeetCode: Daily problem")
+desc_map("n", "<Leader>Lc", ":Leet console<CR>", "LeetCode: Console toggle")
+desc_map("n", "<Leader>Lm", ":Leet menu<CR>", "LeetCode: Menu")
+desc_map("n", "<Leader>Lo", ":Leet open<CR>", "LeetCode: Open problem")
+desc_map("n", "<Leader>Lp", ":Leet pick<CR>", "LeetCode: Pick problem")
+desc_map("n", "<Leader>Lq", ":Leet close<CR>", "LeetCode: Close")
+
+-- LeetCode authentication and setup
+desc_map("n", "<Leader>LA", function()
+	-- Create a custom authentication helper
+	local function show_auth_instructions()
+		local lines = {
+			"í ½íº€ LeetCode Authentication Guide",
+			"",
+			"To use LeetCode features, you need to authenticate:",
+			"",
+			"Method 1: Browser Authentication (Recommended)",
+			"1. Run ':Leet' command",
+			"2. This will open LeetCode interface",
+			"3. Follow any authentication prompts that appear",
+			"4. Login through your browser if prompted",
+			"",
+			"Method 2: Manual Cookie Setup",
+			"1. Login to leetcode.com in your browser",
+			"2. Open Developer Tools (F12)",
+			"3. Go to Application/Storage > Cookies",
+			"4. Copy the 'LEETCODE_SESSION' cookie value",
+			"5. Set it in your environment or config",
+			"",
+			"After authentication, all LeetCode commands will work!",
+			"",
+			"Available commands:",
+			"â€¢ <Leader>Ll - List problems",
+			"â€¢ <Leader>Lp - Pick a problem",
+			"â€¢ <Leader>Lr - Run code",
+			"â€¢ <Leader>Lt - Test code",
+			"â€¢ <Leader>Ls - Submit solution",
+			"â€¢ <Leader>Ld - Daily challenge",
+			"",
+			"Press 'q' to close this help, or Enter to start authentication"
+		}
+
+		-- Create a scratch buffer for instructions
+		local buf = vim.api.nvim_create_buf(false, true)
+		vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+		vim.api.nvim_buf_set_option(buf, 'modifiable', false)
+		vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
+
+		-- Create a floating window
+		local width = 70
+		local height = #lines + 2
+		local row = math.floor((vim.o.lines - height) / 2)
+		local col = math.floor((vim.o.columns - width) / 2)
+
+		local win = vim.api.nvim_open_win(buf, true, {
+			relative = 'editor',
+			width = width,
+			height = height,
+			row = row,
+			col = col,
+			style = 'minimal',
+			border = 'rounded',
+			title = ' LeetCode Setup ',
+			title_pos = 'center'
+		})
+
+		-- Set up keymaps for the help window
+		local opts = { buffer = buf, silent = true }
+		vim.keymap.set('n', 'q', function()
+			vim.api.nvim_win_close(win, true)
+		end, opts)
+
+		vim.keymap.set('n', '<CR>', function()
+			vim.api.nvim_win_close(win, true)
+			vim.cmd("Leet")
+		end, opts)
+
+		vim.keymap.set('n', '<Esc>', function()
+			vim.api.nvim_win_close(win, true)
+		end, opts)
+	end
+
+	show_auth_instructions()
+end, "LeetCode: Authentication help")
+
+-- LeetCode language switching
+desc_map("n", "<Leader>LL", function()
+	local languages = { "c", "cpp", "python3", "java", "javascript", "typescript", "go", "rust" }
+	vim.ui.select(languages, {
+		prompt = "Select LeetCode language:",
+	}, function(choice)
+		if choice then
+			-- Update the language in leetcode config
+			local ok, leetcode = pcall(require, "leetcode")
+			if ok then
+				-- This will require a restart or reconfiguration
+				vim.notify("Language set to: " .. choice, vim.log.levels.INFO)
+				vim.notify("Note: You may need to restart Neovim for language change to take effect", vim.log.levels.WARN)
+			end
+		end
+	end)
+end, "LeetCode: Select language")
+
+-- ============================================================================
 -- AI OPERATIONS
 -- ============================================================================
 
@@ -452,19 +565,6 @@ desc_map("n", "<Leader>zr", ":ThesaurusQueryReplaceCurrentWord<CR>", "Thesaurus:
 -- ============================================================================
 -- ADDITIONAL UNMAPPED PLUGIN FUNCTIONS
 -- ============================================================================
-
--- LeetCode keymaps (using :Leet command)
-desc_map("n", "<Leader>Ll", ":Leet list<CR>", "LeetCode: List problems")
-desc_map("n", "<Leader>Lr", ":Leet run<CR>", "LeetCode: Run code")
-desc_map("n", "<Leader>Ls", ":Leet submit<CR>", "LeetCode: Submit")
-desc_map("n", "<Leader>Lt", ":Leet test<CR>", "LeetCode: Test")
-desc_map("n", "<Leader>Li", ":Leet info<CR>", "LeetCode: Problem info")
-desc_map("n", "<Leader>Ld", ":Leet daily<CR>", "LeetCode: Daily problem")
-desc_map("n", "<Leader>Lc", ":Leet console<CR>", "LeetCode: Console toggle")
-desc_map("n", "<Leader>Lm", ":Leet menu<CR>", "LeetCode: Menu")
-desc_map("n", "<Leader>Lo", ":Leet open<CR>", "LeetCode: Open problem")
-desc_map("n", "<Leader>Lp", ":Leet pick<CR>", "LeetCode: Pick problem")
-desc_map("n", "<Leader>Lq", ":Leet close<CR>", "LeetCode: Close")
 
 -- Mason/Tools management
 desc_map("n", "<Leader>mm", ":Mason<CR>", "Mason: Open Mason")

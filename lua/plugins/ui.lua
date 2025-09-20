@@ -239,11 +239,47 @@ return {
 			})
 		end,
 	},
-	-- Colorscheme: Gruvbox Material
+	-- Colorscheme: Kanagawa Wave (Default)
 	{
-		"sainnhe/gruvbox-material",
+		"rebelot/kanagawa.nvim",
 		lazy = false,
 		priority = 1000, -- Load colorscheme before other plugins
+		config = function()
+			require("kanagawa").setup({
+				compile = false,
+				undercurl = true,
+				commentStyle = { italic = true },
+				functionStyle = {},
+				keywordStyle = { italic = true },
+				statementStyle = { bold = true },
+				typeStyle = {},
+				transparent = false,
+				dimInactive = false,
+				terminalColors = true,
+				colors = {
+					palette = {},
+					theme = { wave = {}, lotus = {}, dragon = {}, all = {} },
+				},
+				overrides = function(colors)
+					return {}
+				end,
+				theme = "wave", -- Load "wave" theme when 'background' option is not set
+				background = {
+					dark = "wave", -- try "dragon" !
+					light = "lotus",
+				},
+			})
+
+			-- Set default colorscheme (themery will handle persistence)
+			vim.cmd("colorscheme kanagawa-wave")
+		end,
+	},
+
+	-- Colorscheme: Gruvbox Material (Available via Themery)
+	{
+		"sainnhe/gruvbox-material",
+		lazy = true,
+		priority = 900,
 		config = function()
 			-- Configure Gruvbox Material
 			vim.g.gruvbox_material_background = "soft"
@@ -252,9 +288,6 @@ return {
 			vim.g.gruvbox_material_enable_italic = 1
 			vim.g.gruvbox_material_enable_bold = 1
 			vim.g.gruvbox_material_better_performance = 1
-
-			-- Set default colorscheme (themery will handle persistence)
-			vim.cmd("colorscheme gruvbox-material")
 		end,
 	},
 
@@ -752,37 +785,6 @@ return {
 		end,
 	},
 
-	{
-		"rebelot/kanagawa.nvim",
-		lazy = true,
-		priority = 900,
-		config = function()
-			require("kanagawa").setup({
-				compile = false,
-				undercurl = true,
-				commentStyle = { italic = true },
-				functionStyle = {},
-				keywordStyle = { italic = true },
-				statementStyle = { bold = true },
-				typeStyle = {},
-				transparent = false,
-				dimInactive = false,
-				terminalColors = true,
-				colors = {
-					palette = {},
-					theme = { wave = {}, lotus = {}, dragon = {}, all = {} },
-				},
-				overrides = function(colors)
-					return {}
-				end,
-				theme = "wave", -- Load "wave" theme when 'background' option is not set
-				background = {
-					dark = "wave", -- try "dragon" !
-					light = "lotus",
-				},
-			})
-		end,
-	},
 
 	{
 		"EdenEast/nightfox.nvim",

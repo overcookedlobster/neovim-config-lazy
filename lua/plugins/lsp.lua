@@ -4,12 +4,10 @@
 return {
 	-- LSP Configuration
 	{
-		"neovim/nvim-lspconfig",
+		"williamboman/mason.nvim", -- Portable package manager for Neovim
 		event = { "BufReadPre", "BufNewFile" },
 		dependencies = {
 			"hrsh7th/cmp-nvim-lsp", -- LSP completion
-			"williamboman/mason.nvim", -- Portable package manager for Neovim
-			"williamboman/mason-lspconfig.nvim", -- Bridges mason.nvim with lspconfig
 			"WhoIsSethDaniel/mason-tool-installer.nvim", -- Auto-install tools
 		},
 		config = function()
@@ -23,10 +21,6 @@ return {
 					},
 				},
 			})
-
-			-- We'll initialize mason-lspconfig later after lspconfig is set up
-			local mason_lspconfig = require("mason-lspconfig")
-
 			-- Set up mason-tool-installer to automatically install tools
 			require("mason-tool-installer").setup({
 				ensure_installed = {
@@ -38,7 +32,7 @@ return {
 					"lua-language-server",
 					-- Linters
 					"flake8", -- Python linter (install via Mason)
-					"eslint", -- JavaScript/TypeScript linter
+					"eslint_d", -- JavaScript/TypeScript linter (eslint daemon)
 					"luacheck", -- Lua linter
 					"svls", -- Verilog and SV
 
@@ -56,32 +50,39 @@ return {
 				["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = "rounded" }),
 			}
 
-			-- Diagnostic configuration
+			-- Set diagnostic signs using the modern API
+			local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
+			for type, icon in pairs(signs) do
+				local hl = "DiagnosticSign" .. type
+				vim.api.nvim_set_hl(0, hl, { fg = "#ffffff" }) -- Set default colors if needed
+			end
+
+			-- Configure diagnostic signs in the diagnostic config
 			vim.diagnostic.config({
 				virtual_text = false,
-				signs = true,
+				signs = {
+					text = {
+						[vim.diagnostic.severity.ERROR] = signs.Error,
+						[vim.diagnostic.severity.WARN] = signs.Warn,
+						[vim.diagnostic.severity.HINT] = signs.Hint,
+						[vim.diagnostic.severity.INFO] = signs.Info,
+					},
+				},
 				underline = true,
 				update_in_insert = true, -- Enable updates while typing
 				severity_sort = true,
 				float = {
 					border = "rounded",
-					source = "always",
+					source = "if_many",
 					header = "",
 					prefix = "",
 				},
 			})
 
-			-- Set diagnostic signs
-			local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
-			for type, icon in pairs(signs) do
-				local hl = "DiagnosticSign" .. type
-				vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
-			end
-
 			-- Global LSP on_attach function
 			local on_attach = function(client, bufnr)
 				-- Enable completion triggered by <c-x><c-o>
-				vim.api.nvim_buf_set_option(bufnr, "omnifunc", "v:lua.vim.lsp.omnifunc")
+				vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
 
 				-- Buffer local mappings
 				local opts = { noremap = true, silent = true, buffer = bufnr }
@@ -149,7 +150,7 @@ return {
 					if vim.fn.has("nvim-0.10.0") == 1 then
 						-- Safe call with pcall to prevent errors
 						pcall(function()
-							vim.lsp.inlay_hint.enable(bufnr, true)
+							vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
 						end)
 					end
 				end
@@ -174,14 +175,20 @@ return {
 			-- Default capabilities
 			local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-			-- Configure individual language servers
-			local lspconfig = require("lspconfig")
-
-			-- Lua
-			lspconfig.lua_ls.setup({
+			-- Configure LSP servers using vim.lsp.config (Neovim 0.11+)
+			-- This replaces the deprecated require('lspconfig') approach
+			-- Global configuration for all servers
+			vim.lsp.config("*", {
 				capabilities = capabilities,
-				on_attach = on_attach,
 				handlers = handlers,
+				root_markers = { ".git" },
+			})
+
+			-- Lua Language Server
+			vim.lsp.config("lua_ls", {
+				cmd = { "lua-language-server" },
+				filetypes = { "lua" },
+				root_markers = { { ".luarc.json", ".luarc.jsonc" }, ".git" },
 				settings = {
 					Lua = {
 						diagnostics = {
@@ -202,11 +209,19 @@ return {
 				},
 			})
 
-			-- Python
-			lspconfig.pyright.setup({
-				capabilities = capabilities,
-				on_attach = on_attach,
-				handlers = handlers,
+			-- Python Language Server
+			vim.lsp.config("pyright", {
+				cmd = { "pyright-langserver", "--stdio" },
+				filetypes = { "python" },
+				root_markers = {
+					"pyproject.toml",
+					"setup.py",
+					"setup.cfg",
+					"requirements.txt",
+					"Pipfile",
+					"pyrightconfig.json",
+					".git",
+				},
 				settings = {
 					python = {
 						analysis = {
@@ -218,11 +233,8 @@ return {
 				},
 			})
 
-			-- C/C++
-			lspconfig.clangd.setup({
-				capabilities = capabilities,
-				on_attach = on_attach,
-				handlers = handlers,
+			-- C/C++ Language Server
+			vim.lsp.config("clangd", {
 				cmd = {
 					"clangd",
 					"--background-index",
@@ -230,56 +242,60 @@ return {
 					"--clang-tidy",
 					"--header-insertion=iwyu",
 				},
+				filetypes = { "c", "cpp", "objc", "objcpp", "cuda", "proto" },
+				root_markers = {
+					".clangd",
+					".clang-tidy",
+					".clang-format",
+					"compile_commands.json",
+					"compile_flags.txt",
+					"configure.ac",
+					".git",
+				},
 			})
 
-			-- Set up servers from mason-lspconfig
-			-- mason_lspconfig.setup_handlers({
-			--   -- Default handler
-			--   function(server_name)
-			--     -- Skip servers that are explicitly configured
-			--     if server_name ~= "lua_ls" and server_name ~= "pyright" and server_name ~= "clangd" and server_name ~= "svls" then
-			--       lspconfig[server_name].setup({
-			--         on_attach = on_attach,
-			--         capabilities = capabilities,
-			--         handlers = handlers,
-			--       })
-			--     end
-			--   end,
-			-- })
-
-			-- SystemVerilog
-			lspconfig.svls.setup({
-				capabilities = capabilities,
-				on_attach = function(client, bufnr)
-					on_attach(client, bufnr)
-
-					-- Enable diagnostics for SystemVerilog files
-					-- vim.diagnostic.disable(bufnr)  -- Commented out to enable diagnostics
-
-					print("SystemVerilog LSP attached with enhanced context support")
-				end,
-				handlers = handlers,
+			-- SystemVerilog Language Server
+			vim.lsp.config("svls", {
 				cmd = { "svls" },
 				filetypes = { "systemverilog", "verilog" },
-				-- Improved workspace configuration
-				root_dir = function(fname)
-					local util = require("lspconfig.util")
-					return util.root_pattern(".svlint.toml", "svls.toml", ".svls.toml", ".git")(fname)
-						or util.path.dirname(fname)
-				end,
-				-- Disable built-in settings that conflict with .svlint.toml
+				root_markers = { ".svlint.toml", "svls.toml", ".svls.toml", ".git" },
 				settings = {},
+			})
+
+			-- Enable LSP servers
+			vim.lsp.enable("lua_ls")
+			vim.lsp.enable("pyright")
+			vim.lsp.enable("clangd")
+			vim.lsp.enable("svls")
+
+			-- Set up LspAttach autocmd for buffer-local configurations
+			vim.api.nvim_create_autocmd("LspAttach", {
+				group = vim.api.nvim_create_augroup("UserLspConfig", {}),
+				callback = function(ev)
+					local client = vim.lsp.get_client_by_id(ev.data.client_id)
+					local bufnr = ev.buf
+
+					-- Call the on_attach function
+					on_attach(client, bufnr)
+
+					-- Special handling for SystemVerilog
+					if client and client.name == "svls" then
+						print("SystemVerilog LSP attached with enhanced context support")
+					end
+				end,
 			})
 
 			-- Add command to restart LSP servers
 			vim.api.nvim_create_user_command("LspRestart", function()
-				vim.cmd("LspStop")
+				vim.lsp.stop_client(vim.lsp.get_clients())
 				vim.defer_fn(function()
-					vim.cmd("LspStart")
+					-- Re-enable all servers
+					vim.lsp.enable("lua_ls")
+					vim.lsp.enable("pyright")
+					vim.lsp.enable("clangd")
+					vim.lsp.enable("svls")
 				end, 1000)
 			end, { desc = "Restart LSP servers" })
-
-			-- Add command to check svls status
 			vim.api.nvim_create_user_command("SvlsStatus", function()
 				local clients = vim.lsp.get_active_clients({ name = "svls" })
 				if #clients > 0 then
@@ -334,8 +350,8 @@ return {
 			-- Configure linters by filetype
 			lint.linters_by_ft = {
 				python = { "flake8" },
-				javascript = { "eslint" },
-				typescript = { "eslint" },
+				javascript = { "eslint_d" },
+				typescript = { "eslint_d" },
 				lua = { "luacheck" },
 				-- SystemVerilog/Verilog linting with verilator
 				systemverilog = { "verilator" },
