@@ -276,15 +276,22 @@ return {
 		end,
 	},
 
-	-- Markdown preview
+	-- Live preview for Markdown, HTML, AsciiDoc, SVG
 	{
-		"iamcco/markdown-preview.nvim",
-		build = "cd app && npm install",
-		ft = { "markdown" },
-		cmd = { "MarkdownPreview", "MarkdownPreviewStop" },
-		init = function()
-			vim.g.mkdp_auto_close = 1
-			vim.g.mkdp_refresh_slow = 1
+		"brianhuster/live-preview.nvim",
+		ft = { "markdown", "html", "asciidoc", "svg" },
+		cmd = { "LivePreview", "LivePreviewStop", "LivePreviewToggle" },
+		config = function()
+			require("livepreview").setup({
+				-- Port for the preview server
+				port = 5500,
+				-- Auto-open browser when starting preview
+				browser = "default",
+				-- Dynamic title based on file name
+				dynamic_title = true,
+				-- File types to enable live preview
+				file_types = { "markdown", "html", "asciidoc", "svg" },
+			})
 		end,
 	},
 

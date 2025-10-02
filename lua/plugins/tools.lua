@@ -529,16 +529,23 @@ return {
 		end,
 	},
 
-	-- Markdown Preview
-	-- install with yarn or npm
+	-- Live Preview for Markdown, HTML, AsciiDoc, SVG
 	{
-		"iamcco/markdown-preview.nvim",
-		cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
-		build = "cd app && yarn install",
-		init = function()
-			vim.g.mkdp_filetypes = { "markdown" }
+		"brianhuster/live-preview.nvim",
+		ft = { "markdown", "html", "asciidoc", "svg" },
+		cmd = { "LivePreview", "LivePreviewStop", "LivePreviewToggle" },
+		config = function()
+			require("livepreview").setup({
+				-- Port for the preview server
+				port = 5500,
+				-- Auto-open browser when starting preview
+				browser = "default",
+				-- Dynamic title based on file name
+				dynamic_title = true,
+				-- File types to enable live preview
+				file_types = { "markdown", "html", "asciidoc", "svg" },
+			})
 		end,
-		ft = { "markdown" },
 	},
 
 	-- Thesaurus plugin for synonyms and definitions

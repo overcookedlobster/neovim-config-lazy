@@ -43,6 +43,9 @@ return {
 
 				-- Code/Config operations
 				{ "<leader>c", group = "Code/Config" },
+				{ "<leader>cm", desc = "Code: Live preview" },
+				{ "<leader>cM", desc = "Code: Stop live preview" },
+				{ "<leader>ct", desc = "Code: Toggle live preview" },
 
 				-- Explorer (single key)
 				{ "<leader>e", desc = "Explorer: Toggle NvimTree" },
