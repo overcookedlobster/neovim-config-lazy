@@ -203,27 +203,6 @@ return {
 							command = { temperature = 0.7, top_p = 1 },
 						},
 					},
-					igpt = {
-						name = "igpt",
-						style = "openai",
-						api_key = os.getenv("IGPT_API_KEY"),
-						endpoint = "http://localhost:8001/v1/chat/completions",
-						-- model_endpoint = "http://localhost/v1/models",
-						models = {
-							"gpt-4o",
-							"claude-sonnet-4",
-						},
-						-- model_endpoint = "http://localhost:8000/v1/models",
-						topic_prompt = "Summarize our conversation in 3-4 words.",
-						topic = {
-							model = "gpt-4o",
-							params = { max_completion_tokens = 64 },
-						},
-						params = {
-							chat = { temperature = 0, top_p = 1, max_tokens = 8192 },
-							command = { temperature = 0, top_p = 1, max_tokens = 8192 },
-						},
-					},
 				},
 
 				cmd_prefix = "Prt",
@@ -574,7 +553,7 @@ return {
 		config = function()
 			require("csvview").setup({
 				parser = {
-					comments = { "#", "//" }
+					comments = { "#", "//" },
 				},
 				keymaps = {
 					-- Text objects for selecting fields
