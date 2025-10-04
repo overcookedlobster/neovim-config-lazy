@@ -337,19 +337,8 @@ return {
 			-- add any opts here
 			-- for example
 			instructions_file = "avante.md",
-			provider = "igpt", -- Changed from copilot to igpt since copilot is disabled
-			auto_suggestions_provider = "igpt", -- Changed from copilot to igpt
-			acp_providers = {
-				["opencode"] = {
-					command = "opencode-acp",
-					args = {},
-					env = {
-						NODE_NO_WARNINGS = "1",
-						OPENCODE_BIN = vim.fn.exepath("opencode"),
-						-- OPENCODE_URL = "http://127.0.0.1:3000", -- Uncomment to use existing server
-					},
-				},
-			},
+			provider = "xai", -- Changed from copilot to igpt since copilot is disabled
+			auto_suggestions_provider = "xai", -- Changed from copilot to igpt
 			-- RAG Service Configuration
 			rag_service = {
 				enabled = false, -- Enable RAG service
@@ -357,23 +346,27 @@ return {
 				-- host_mount = vim.fn.expand("~/RAG"), -- Mount RAG directory for file access
 				runner = "docker", -- Use Docker to run RAG service
 				-- LLM configuration for RAG service (for generating responses based on retrieved context)
+
 				llm = {
 					__inherited_from = "openai",
-					endpoint = "http://localhost:8001/v1", -- Your igpt endpoint
-					api_key = "IGPT_API_KEY", -- Environment variable name for API key
-					model = "gpt-4o", -- Your igpt model name
-					extra = {
+					endpoint = "https://api.x.ai/v1",
+					model = "grok-4",
+					model_names = { "grok-4", "grok-3", "grok-3-mini" },
+					api_key_name = "XAI_API_KEY",
+					timeout = 50000,
+					cache = true,
+					extra_request_body = {
 						temperature = 0,
-						max_tokens = 4096,
+						max_completion_tokens = 16384,
 						reasoning_effort = "high",
 					},
 				},
 				-- Embedding configuration for RAG service (for document indexing and similarity search)
 				embed = {
-					__inherited_from = "openai",
+					provider = "openai",
 					-- Use localhost since we're using --network=host
-					endpoint = "http://localhost:8001/v1", -- Your igpt endpoint accessible from Docker
-					api_key = "IGPT_API_KEY", -- Same API key
+					endpoint = "https://api.openai.com/v1", -- Your igpt endpoint accessible from Docker
+					api_key = "OPENAI_API_KEY", -- Same API key
 					model = "text-embedding-3-large", -- Embedding model (adjust if your endpoint uses different model names)
 					-- Option 2: Uncomment below to use OpenAI for embeddings instead
 					-- endpoint = "https://api.openai.com/v1",
@@ -448,22 +441,6 @@ return {
 					-- extra_request_body = {
 					--   reasoning_effort = "high",
 					-- },
-				},
-				igpt = {
-					__inherited_from = "openai",
-					endpoint = "http://localhost:8001/v1",
-					model = "claude-sonnet-4",
-					model_names = { "claude-sonnet-4", "gpt-4o", "gpt-35-turbo" },
-					-- model = "gpt-4o",
-					api_key_name = "IGPT_API_KEY",
-					timeout = 50000,
-					extra_request_body = {
-						temperature = 0,
-						max_completion_tokens = 16384,
-						-- max_completion_tokens = 4096,
-						reasoning_effort = "high",
-					},
-					-- disable_tools = true,
 				},
 				deepseek = {
 					__inherited_from = "openai",
