@@ -339,6 +339,17 @@ return {
 			instructions_file = "avante.md",
 			provider = "igpt", -- Changed from copilot to igpt since copilot is disabled
 			auto_suggestions_provider = "igpt", -- Changed from copilot to igpt
+			acp_providers = {
+				["opencode"] = {
+					command = "opencode-acp",
+					args = {},
+					env = {
+						NODE_NO_WARNINGS = "1",
+						OPENCODE_BIN = vim.fn.exepath("opencode"),
+						-- OPENCODE_URL = "http://127.0.0.1:3000", -- Uncomment to use existing server
+					},
+				},
+			},
 			-- RAG Service Configuration
 			rag_service = {
 				enabled = false, -- Enable RAG service
@@ -408,8 +419,17 @@ return {
 				xai = {
 					__inherited_from = "openai",
 					endpoint = "https://api.x.ai/v1",
-					model = "grok-4",
-					model_names = { "grok-4", "grok-3", "grok-3-mini" },
+					model = "grok-4-fast-reasoning",
+					model_names = {
+						"grok-code-fast-1",
+						"grok-4-fast-reasoning",
+						"grok-4-fast-non-reasoning",
+						"grok-4-0709",
+						"grok-3-mini",
+						"grok-3",
+						"grok-2-vision-1212",
+						"grok-2-image-1212",
+					},
 					api_key_name = "XAI_API_KEY",
 					timeout = 50000,
 					cache = true,
