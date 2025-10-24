@@ -278,6 +278,7 @@ local function telescope_file_picker()
 end
 
 -- Function to highlight selected files in nvim-tree
+-- Simplified and more reliable highlight function
 local function highlight_selected_files()
 	local view = require("nvim-tree.view")
 	if not view.is_visible() then
@@ -292,36 +293,87 @@ local function highlight_selected_files()
 	-- Clear existing highlights
 	vim.api.nvim_buf_clear_namespace(bufnr, ns_id, 0, -1)
 
+	-- Get current working directory
+	local cwd = vim.fn.getcwd()
+
+	-- Create a set of all selected file basenames and relative paths for quick lookup
+	local selected_basenames = {}
+	local selected_relpaths = {}
+
+	for file_path, _ in pairs(selected_files) do
+		-- Store basename
+		local basename = vim.fn.fnamemodify(file_path, ":t")
+		selected_basenames[basename] = file_path
+
+		-- Store relative path variations
+		local relpath = file_path
+		if relpath:sub(1, 2) == "./" then
+			relpath = relpath:sub(3)
+		end
+		selected_relpaths[relpath] = file_path
+		selected_relpaths[file_path] = file_path
+	end
+
 	-- Get all lines in the buffer
 	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 
 	for line_num, line_content in ipairs(lines) do
-		-- Extract file path from the line (nvim-tree format)
-		-- This is a simplified approach - nvim-tree lines can be complex
-		local file_path = line_content:match("([^│├└─ ]+)$")
-		if file_path then
-			-- Convert to relative path format
-			local cwd = vim.fn.getcwd()
-			local full_path = cwd .. "/" .. file_path
-			local relative_path = "./" .. file_path
+		-- Skip empty lines and lines that don't contain files
+		if line_content:match("%S") and not line_content:match("^[│├└─ ]*$") then
+			-- Extract the filename from the end of the line
+			local filename = line_content:match("([^│├└─ /\\\\]+)%s*$")
 
-			-- Check if this file is selected
-			if selected_files[relative_path] or selected_files[full_path] or selected_files[file_path] then
-				-- Add highlight to the entire line
-				vim.api.nvim_buf_add_highlight(bufnr, ns_id, "ConcatFilesSelected", line_num - 1, 0, -1)
+			if filename and filename ~= "" then
+				-- Check if this filename matches any of our selected files
+				local is_selected = false
+				local matched_path = nil
 
-				-- Add a visual indicator at the beginning of the line
-				local col_start = line_content:find("[^│├└─ ]") or 1
-				if col_start > 1 then
-					col_start = col_start - 1
+				-- First, try exact basename match
+				if selected_basenames[filename] then
+					is_selected = true
+					matched_path = selected_basenames[filename]
+				else
+					-- Try to build the relative path by looking at the tree structure
+					-- This is a simplified approach - we'll match by filename for now
+					-- and verify it's the right file by checking if it exists
+					for selected_path, _ in pairs(selected_files) do
+						if selected_path:match(filename .. "$") then
+							-- Verify the file exists at this path
+							local full_path = selected_path
+							if not full_path:match("^/") then
+								if full_path:sub(1, 2) == "./" then
+									full_path = cwd .. "/" .. full_path:sub(3)
+								else
+									full_path = cwd .. "/" .. full_path
+								end
+							end
+
+							if vim.fn.filereadable(full_path) == 1 then
+								is_selected = true
+								matched_path = selected_path
+								break
+							end
+						end
+					end
 				end
 
-				-- Add an extmark with virtual text
-				vim.api.nvim_buf_set_extmark(bufnr, ns_id, line_num - 1, col_start, {
-					virt_text = { { "✅", "ConcatFilesSelectedIcon" } },
-					virt_text_pos = "inline",
-					priority = 100,
-				})
+				if is_selected then
+					-- Add highlight to the entire line
+					vim.api.nvim_buf_add_highlight(bufnr, ns_id, "ConcatFilesSelected", line_num - 1, 0, -1)
+
+					-- Find position for checkmark (just before the filename)
+					local col_start = line_content:find(filename) or 1
+					if col_start > 1 then
+						col_start = col_start - 1
+					end
+
+					-- Add checkmark
+					vim.api.nvim_buf_set_extmark(bufnr, ns_id, line_num - 1, col_start, {
+						virt_text = { { "✅ ", "ConcatFilesSelectedIcon" } },
+						virt_text_pos = "inline",
+						priority = 100,
+					})
+				end
 			end
 		end
 	end
@@ -361,23 +413,21 @@ local function nvim_tree_file_picker()
 
 	-- Custom function to toggle file selection
 	local function toggle_file_selection()
-		-- Get the current node using the correct API
 		local node = api.tree.get_node_under_cursor()
 		if not node then
 			vim.notify("⚠️  No file selected", vim.log.levels.WARN)
 			return
 		end
 
-		-- Only allow file selection, not directories
 		if node.type ~= "file" then
 			vim.notify("⚠️  Can only select files, not directories", vim.log.levels.WARN)
 			return
 		end
 
 		local file_path = node.absolute_path
-
-		-- Make path relative to current working directory
 		local cwd = vim.fn.getcwd()
+
+		-- Convert to relative path consistently
 		if file_path:sub(1, #cwd) == cwd then
 			file_path = "." .. file_path:sub(#cwd + 1)
 		end
@@ -390,8 +440,11 @@ local function nvim_tree_file_picker()
 			vim.notify("✅ Added: " .. vim.fn.fnamemodify(file_path, ":."), vim.log.levels.INFO)
 		end
 
-		-- Update the tree display to show selection status
-		M.update_nvim_tree_display()
+		-- Force immediate highlight refresh
+		vim.defer_fn(function()
+			highlight_selected_files()
+			M.update_nvim_tree_display()
+		end, 10)
 	end
 
 	-- Function to select all files in current directory and subdirectories
@@ -598,6 +651,34 @@ function M.restore_nvim_tree_keymaps(original_keymaps)
 	-- The plugin will restore its own keymaps when refocused or reopened
 end
 
+function M.return_to_nvim_tree_selection()
+	-- Re-setup the nvim-tree selection mode without clearing existing selections
+	local api = require("nvim-tree.api")
+	local view = require("nvim-tree.view")
+
+	if not view.is_visible() then
+		api.tree.open()
+	end
+
+	api.tree.focus()
+
+	-- Re-setup the autocmd for highlighting
+	local bufnr = vim.api.nvim_get_current_buf()
+	local group = vim.api.nvim_create_augroup("ConcatFilesNvimTree", { clear = true })
+	vim.api.nvim_create_autocmd({ "BufEnter", "CursorMoved" }, {
+		group = group,
+		buffer = bufnr,
+		callback = function()
+			vim.defer_fn(highlight_selected_files, 50)
+		end,
+	})
+
+	-- Refresh highlights immediately
+	highlight_selected_files()
+
+	vim.notify("🌲 Returned to file selection mode. Selected: " .. vim.tbl_count(selected_files) .. " files", vim.log.levels.INFO)
+end
+
 -- Enhanced options menu with back navigation
 function M.show_options_menu()
 	local file_count = vim.tbl_count(selected_files)
@@ -607,7 +688,13 @@ function M.show_options_menu()
 			prompt = "No files selected! What would you like to do?",
 		}, function(choice)
 			if choice and choice:match("Go back") then
-				telescope_file_picker()
+				-- Check if we came from nvim-tree or telescope
+				local view = require("nvim-tree.view")
+				if view.is_visible() then
+					M.return_to_nvim_tree_selection()
+				else
+					telescope_file_picker()
+				end
 			end
 		end)
 		return
@@ -631,6 +718,13 @@ function M.show_options_menu()
 		end,
 	}, function(choice)
 		if not choice then
+			-- User canceled (pressed escape) - return to selection mode
+			local view = require("nvim-tree.view")
+			if view.is_visible() then
+				M.return_to_nvim_tree_selection()
+			else
+				telescope_file_picker()
+			end
 			return
 		end
 
@@ -643,7 +737,12 @@ function M.show_options_menu()
 		elseif choice:match("Preview selection") then
 			M.preview_selection()
 		elseif choice:match("Back to file selection") then
-			telescope_file_picker()
+			local view = require("nvim-tree.view")
+			if view.is_visible() then
+				M.return_to_nvim_tree_selection()
+			else
+				telescope_file_picker()
+			end
 		elseif choice:match("Start concatenation") then
 			M.execute_concatenation()
 		else -- Cancel
