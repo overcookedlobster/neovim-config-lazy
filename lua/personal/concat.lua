@@ -395,21 +395,9 @@ local function setup_highlights()
 	})
 end
 
--- NvimTree file picker with multi-select
-local function nvim_tree_file_picker()
-	if not has_nvim_tree() then
-		vim.notify("NvimTree not found, falling back to telescope", vim.log.levels.WARN)
-		return telescope_file_picker()
-	end
-
+-- Extract keymap setup into a separate function
+local function setup_nvim_tree_keymaps(bufnr)
 	local api = require("nvim-tree.api")
-	local view = require("nvim-tree.view")
-
-	-- Setup custom highlights
-	setup_highlights()
-
-	-- Store original keymaps to restore later
-	local original_keymaps = {}
 
 	-- Custom function to toggle file selection
 	local function toggle_file_selection()
@@ -427,7 +415,6 @@ local function nvim_tree_file_picker()
 		local file_path = node.absolute_path
 		local cwd = vim.fn.getcwd()
 
-		-- Convert to relative path consistently
 		if file_path:sub(1, #cwd) == cwd then
 			file_path = "." .. file_path:sub(#cwd + 1)
 		end
@@ -440,11 +427,7 @@ local function nvim_tree_file_picker()
 			vim.notify("✅ Added: " .. vim.fn.fnamemodify(file_path, ":."), vim.log.levels.INFO)
 		end
 
-		-- Force immediate highlight refresh
-		vim.defer_fn(function()
-			highlight_selected_files()
-			M.update_nvim_tree_display()
-		end, 10)
+		M.update_nvim_tree_display()
 	end
 
 	-- Function to select all files in current directory and subdirectories
@@ -542,6 +525,46 @@ local function nvim_tree_file_picker()
 		vim.notify("🔄 Refreshed file selection highlights", vim.log.levels.INFO)
 	end
 
+	-- Set up custom keymaps for file selection
+	local opts = { buffer = bufnr, noremap = true, silent = true }
+
+	vim.keymap.set("n", "<Tab>", toggle_file_selection, opts)
+	vim.keymap.set("n", "<C-a>", select_all_files, opts)
+	vim.keymap.set("n", "<C-d>", deselect_all_files, opts)
+	vim.keymap.set("n", "<C-i>", show_selection_info, opts)
+	vim.keymap.set("n", "<C-o>", go_to_options, opts)
+	vim.keymap.set("n", "<CR>", go_to_options, opts)
+	vim.keymap.set("n", "<C-h>", show_help, opts)
+	vim.keymap.set("n", "?", show_help, opts)
+	vim.keymap.set("n", "r", refresh_highlights, opts)
+	vim.keymap.set("n", "q", function()
+		M.clear_nvim_tree_highlights()
+		M.restore_nvim_tree_keymaps(original_keymaps)
+		M.reset_state()
+	end, opts)
+
+	return {
+		toggle_file_selection = toggle_file_selection,
+		-- ... other functions if needed
+	}
+end
+
+-- NvimTree file picker with multi-select
+local function nvim_tree_file_picker()
+	if not has_nvim_tree() then
+		vim.notify("NvimTree not found, falling back to telescope", vim.log.levels.WARN)
+		return telescope_file_picker()
+	end
+
+	local api = require("nvim-tree.api")
+	local view = require("nvim-tree.view")
+
+	-- Setup custom highlights
+	setup_highlights()
+
+	-- Store original keymaps to restore later
+	local original_keymaps = {}
+
 	-- Open nvim-tree if not already open
 	if not view.is_visible() then
 		api.tree.open()
@@ -561,23 +584,8 @@ local function nvim_tree_file_picker()
 		end
 	end
 
-	-- Set up custom keymaps for file selection
-	local opts = { buffer = bufnr, noremap = true, silent = true }
-
-	vim.keymap.set("n", "<Tab>", toggle_file_selection, opts)
-	vim.keymap.set("n", "<C-a>", select_all_files, opts)
-	vim.keymap.set("n", "<C-d>", deselect_all_files, opts)
-	vim.keymap.set("n", "<C-i>", show_selection_info, opts)
-	vim.keymap.set("n", "<C-o>", go_to_options, opts)
-	vim.keymap.set("n", "<CR>", go_to_options, opts)
-	vim.keymap.set("n", "<C-h>", show_help, opts)
-	vim.keymap.set("n", "?", show_help, opts)
-	vim.keymap.set("n", "r", refresh_highlights, opts)
-	vim.keymap.set("n", "q", function()
-		M.clear_nvim_tree_highlights()
-		M.restore_nvim_tree_keymaps(original_keymaps)
-		M.reset_state()
-	end, opts)
+	-- Setup keymaps using the extracted function
+	setup_nvim_tree_keymaps(bufnr)
 
 	-- Show initial help
 	vim.notify([[
@@ -661,9 +669,12 @@ function M.return_to_nvim_tree_selection()
 	end
 
 	api.tree.focus()
-
-	-- Re-setup the autocmd for highlighting
 	local bufnr = vim.api.nvim_get_current_buf()
+
+	-- Re-setup keymaps using the same function
+	setup_nvim_tree_keymaps(bufnr)
+
+	-- Re-setup autocmd
 	local group = vim.api.nvim_create_augroup("ConcatFilesNvimTree", { clear = true })
 	vim.api.nvim_create_autocmd({ "BufEnter", "CursorMoved" }, {
 		group = group,
@@ -673,9 +684,7 @@ function M.return_to_nvim_tree_selection()
 		end,
 	})
 
-	-- Refresh highlights immediately
 	highlight_selected_files()
-
 	vim.notify("🌲 Returned to file selection mode. Selected: " .. vim.tbl_count(selected_files) .. " files", vim.log.levels.INFO)
 end
 
@@ -921,46 +930,68 @@ function M.execute_concatenation()
 
 		if should_skip then
 			skipped = skipped + 1
-			goto continue
-		end
-
-		-- Check file size
-		if config.max_size then
-			local size = vim.fn.getfsize(file_path)
-			if size > config.max_size then
-				vim.notify("⏭️  Skipping " .. file_path .. ": exceeds size limit", vim.log.levels.WARN)
-				skipped = skipped + 1
-				goto continue
-			end
-		end
-
-		-- Read and add file content
-		local file_lines = {}
-		local f = io.open(file_path, "r")
-		if f then
-			for line in f:lines() do
-				table.insert(file_lines, line)
-			end
-			f:close()
-
-			-- Add file section
-			table.insert(content, "## 📄 " .. file_path)
-			table.insert(content, "")
-			-- Detect file type for syntax highlighting
-			local ext = file_path:match("%.([^%.]+)$")
-			local lang = ext and ext or ""
-			table.insert(content, "```" .. lang)
-			vim.list_extend(content, file_lines)
-			table.insert(content, "```")
-			table.insert(content, "")
-
-			processed = processed + 1
 		else
-			vim.notify("❌ Failed to read: " .. file_path, vim.log.levels.ERROR)
-			skipped = skipped + 1
-		end
+			-- Check file size
+			if config.max_size then
+				local size = vim.fn.getfsize(file_path)
+				if size > config.max_size then
+					vim.notify("⏭️  Skipping " .. file_path .. ": exceeds size limit", vim.log.levels.WARN)
+					skipped = skipped + 1
+				else
+					-- Read and add file content
+					local file_lines = {}
+					local f = io.open(file_path, "r")
+					if f then
+						for line in f:lines() do
+							table.insert(file_lines, line)
+						end
+						f:close()
 
-		::continue::
+						-- Add file section
+						table.insert(content, "## 📄 " .. file_path)
+						table.insert(content, "")
+						-- Detect file type for syntax highlighting
+						local ext = file_path:match("%.([^%.]+)$")
+						local lang = ext and ext or ""
+						table.insert(content, "```" .. lang)
+						vim.list_extend(content, file_lines)
+						table.insert(content, "```")
+						table.insert(content, "")
+
+						processed = processed + 1
+					else
+						vim.notify("❌ Failed to read: " .. file_path, vim.log.levels.ERROR)
+						skipped = skipped + 1
+					end
+				end
+			else
+				-- Read and add file content (no size limit)
+				local file_lines = {}
+				local f = io.open(file_path, "r")
+				if f then
+					for line in f:lines() do
+						table.insert(file_lines, line)
+					end
+					f:close()
+
+					-- Add file section
+					table.insert(content, "## 📄 " .. file_path)
+					table.insert(content, "")
+					-- Detect file type for syntax highlighting
+					local ext = file_path:match("%.([^%.]+)$")
+					local lang = ext and ext or ""
+					table.insert(content, "```" .. lang)
+					vim.list_extend(content, file_lines)
+					table.insert(content, "```")
+					table.insert(content, "")
+
+					processed = processed + 1
+				else
+					vim.notify("❌ Failed to read: " .. file_path, vim.log.levels.ERROR)
+					skipped = skipped + 1
+				end
+			end
+		end
 	end
 
 	-- Write output
