@@ -262,11 +262,22 @@ return {
 				settings = {},
 			})
 
+						-- Xilinx Language Server
+						vim.lsp.config("xilinx", {
+						  cmd = { "xilinx-language-server" },
+						  filetypes = { "xdc", "xsct" },
+						  root_markers = { ".git" },
+						  init_options = {
+						    method = "builtin",
+						  },
+						})
+				
 			-- Enable LSP servers
 			vim.lsp.enable("lua_ls")
 			vim.lsp.enable("pyright")
 			vim.lsp.enable("clangd")
 			vim.lsp.enable("svls")
+					vim.lsp.enable("xilinx")
 
 			-- Set up LspAttach autocmd for buffer-local configurations
 			vim.api.nvim_create_autocmd("LspAttach", {

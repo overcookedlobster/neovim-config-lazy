@@ -393,7 +393,8 @@ return {
 					end, -- Dummy stream parser
 				},
 				claude = {
-					model = "claude-4-sonnet",
+					model = "claude-sonnet-4-5-20250929",
+
 					-- thinking = {
 					--   type = "enabled";
 					--   budget_tokens = 2048;
@@ -435,7 +436,12 @@ return {
 				gemini_beta = {
 					__inherited_from = "gemini",
 					-- endpoint = "https://generativelanguage.googleapis.com/v1beta/openai",
-					model = "gemini-2.5-pro-exp-03-25",
+					model = "gemini-2.5-pro",
+					model_names = {
+						"gemini-2.5-pro",
+						"gemini-2.5-flash",
+						"gemini-2.5-flash-lite",
+					},
 					api_key_name = "GEMINI_API_KEY",
 					-- timeout = 50000,
 					-- extra_request_body = {
@@ -559,6 +565,7 @@ return {
 				"MeanderingProgrammer/render-markdown.nvim",
 				opts = {
 					file_types = { "markdown", "Avante" },
+					latex = { enabled = true },
 				},
 				ft = { "markdown", "Avante" },
 			},
