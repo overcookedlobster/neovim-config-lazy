@@ -393,7 +393,8 @@ return {
 					end, -- Dummy stream parser
 				},
 				claude = {
-					model = "claude-4-sonnet",
+					model = "claude-sonnet-4-5-20250929",
+
 					-- thinking = {
 					--   type = "enabled";
 					--   budget_tokens = 2048;
@@ -560,6 +561,7 @@ return {
 				"MeanderingProgrammer/render-markdown.nvim",
 				opts = {
 					file_types = { "markdown", "Avante" },
+					latex = { enabled = true },
 				},
 				ft = { "markdown", "Avante" },
 			},

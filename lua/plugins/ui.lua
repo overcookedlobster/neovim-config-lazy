@@ -425,9 +425,8 @@ return {
 				},
 			})
 
-			-- Ensure nvim-notify remains the notification handler after noice setup
-			local notify = require("notify")
-			vim.notify = notify
+					-- Use Noice for notifications
+					vim.notify = require("noice").notify
 		end,
 	},
 

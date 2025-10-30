@@ -16,6 +16,7 @@ return {
 				"latex", -- For LaTeX files
 				"bibtex", -- For BibTeX files
 				"markdown", -- For documentation
+				"markdown_inline",
 				"bash", -- For shell scripts
 				"python", -- If you work with Python
 				"verilog", -- For Verilog files
@@ -26,7 +27,7 @@ return {
 			sync_install = false,
 
 			-- Automatically install missing parsers when entering buffer
-			auto_install = false,
+			auto_install = true,
 
 			-- List of parsers to ignore installing (for "all")
 			ignore_install = {},
@@ -46,6 +47,14 @@ return {
 				enable = true, -- Enable TreeSitter-based indentation
 				disable = { "tex" }, -- Disable TS indentation for tex files as VimTeX handles this better
 			},
+		})
+
+		-- Ensure TreeSitter highlighter is enabled for markdown buffers
+		vim.api.nvim_create_autocmd("FileType", {
+			pattern = "markdown",
+			callback = function()
+				vim.treesitter.start(vim.api.nvim_get_current_buf(), "markdown")
+			end,
 		})
 	end,
 }
