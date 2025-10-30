@@ -34,10 +34,7 @@ return {
 							}
 						end,
 						models = {
-							"claude-sonnet-4-20250514",
-							"claude-3-7-sonnet-20250219",
-							"claude-3-5-sonnet-20241022",
-							"claude-3-5-haiku-20241022",
+							"claude-4-5-sonnet",
 						},
 						preprocess_payload = function(payload)
 							for _, message in ipairs(payload.messages) do
