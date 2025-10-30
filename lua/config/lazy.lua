@@ -44,10 +44,10 @@ require("lazy").setup({
 	install = {
 		colorscheme = { "gruvbox-material" }, -- Colorscheme to use during installation
 	},
-	checker = {
-		enabled = true, -- Check for plugin updates
-		frequency = 3600, -- Check once per hour
-	},
+	-- checker = {
+	-- 	enabled = true, -- Check for plugin updates
+	-- 	frequency = 3600, -- Check once per hour
+	-- },
 	change_detection = {
 		enabled = true, -- Auto-reload config on changes
 		notify = false, -- Don't show notifications on changes
