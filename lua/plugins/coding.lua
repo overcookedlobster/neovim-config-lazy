@@ -379,18 +379,22 @@ return {
 				docker_extra_args = "--network=host", -- Additional Docker arguments if needed
 			},
 			providers = {
+				ollama = {
+					endpoint = "http://127.0.0.1:11434", -- Note that there is no /v1 at the end.
+					model = "minimax-m2:cloud",
+				},
 				-- Explicitly disable copilot provider to prevent SSL errors
 				copilot = {
-					enabled = false, -- Disable copilot provider
-					list_models = function()
-						return {}
-					end, -- Return empty model list
-					parse_response = function()
-						return ""
-					end, -- Dummy response parser
-					parse_stream_data = function()
-						return ""
-					end, -- Dummy stream parser
+					enabled = true, -- Disable copilot provider
+					-- list_models = function()
+					-- 	return {}
+					-- end, -- Return empty model list
+					-- parse_response = function()
+					-- 	return ""
+					-- end, -- Dummy response parser
+					-- parse_stream_data = function()
+					-- 	return ""
+					-- end, -- Dummy stream parser
 				},
 				claude = {
 					model = "claude-sonnet-4-5-20250929",
@@ -436,8 +440,8 @@ return {
 				gemini_beta = {
 					__inherited_from = "gemini",
 					-- endpoint = "https://generativelanguage.googleapis.com/v1beta/openai",
-					model = "gemini-2.5-pro",
-					model_names = { "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite" },
+					model = "gemini-3-pro",
+					model_names = { "gemini-3-pro", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite" },
 					api_key_name = "GEMINI_API_KEY",
 					-- timeout = 50000,
 					-- extra_request_body = {

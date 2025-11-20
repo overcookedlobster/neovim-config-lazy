@@ -64,19 +64,49 @@ else
 	vim.notify("Failed to load personal modules: " .. tostring(personal_module), vim.log.levels.WARN)
 end
 
--- Fixed clipboard configuration for xsel (removed --nodetach to prevent hanging)
-vim.g.clipboard = {
-	name = "xsel",
-	copy = {
-		["+"] = "xsel -i -b",
-		["*"] = "xsel -i -p",
-	},
-	paste = {
-		["+"] = "xsel -o -b",
-		["*"] = "xsel -o -p",
-	},
-	cache_enabled = 1,
-}
+-- Smart clipboard that works on X11 AND Wayland (Niri, Hyprland, etc.)
+-- Automatically picks the right backend — no more manual changes when switching!
+local function get_clipboard_backend()
+	-- Wayland first (most people are here in 2025)
+	if os.getenv("WAYLAND_DISPLAY") or os.getenv("HYPRLAND_INSTANCE_SIGNATURE") then
+		return {
+			name = "wl-clipboard",
+			copy = {
+				["+"] = "wl-copy",
+				["*"] = "wl-copy",
+			},
+			paste = {
+				["+"] = "wl-paste --no-newline",
+				["*"] = "wl-paste --no-newline",
+			},
+			cache_enabled = 0,
+		}
+	end
+
+	-- Fallback to X11
+	if os.getenv("DISPLAY") then
+		return {
+			name = "xsel",
+			copy = {
+				["+"] = "xsel --nodetach -i -b",
+				["*"] = "xsel --nodetach -i -p",
+			},
+			paste = {
+				["+"] = "xsel -o -b",
+				["*"] = "xsel -o -p",
+			},
+			cache_enabled = 1,
+		}
+	end
+
+	-- If neither (unlikely), fall back to internal only
+	return nil
+end
+
+vim.g.clipboard = get_clipboard_backend() or vim.g.clipboard
+
+-- Bonus: make yy/dd/p always use system clipboard (this is the modern way)
+vim.opt.clipboard = "unnamedplus"
 
 vim.g.mkdp_browserfunc = function(url)
 	vim.fn.system("firefox --new-window " .. url .. " &")
