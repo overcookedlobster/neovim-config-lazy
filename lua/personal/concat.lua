@@ -287,11 +287,19 @@ local function telescope_file_picker()
 	picker:find()
 end
 
--- Function to highlight selected files in nvim-tree
--- FIX: Removed basename caching to prevent identical filenames colliding
+-- ==============================================================================
+-- UNIVERSAL HIGHLIGHTING LOGIC (Version Proof)
+-- ==============================================================================
+
 local function highlight_selected_files()
-	local view = require("nvim-tree.view")
-	if not view.is_visible() then
+	-- 1. Safety Checks
+	local status_api, api = pcall(require, "nvim-tree.api")
+	if not status_api then
+		return
+	end
+
+	local status_view, view = pcall(require, "nvim-tree.view")
+	if not status_view or not view.is_visible() then
 		return
 	end
 
@@ -300,55 +308,61 @@ local function highlight_selected_files()
 		return
 	end
 
-	-- Clear existing highlights
+	-- 2. Prevent infinite recursion (since we move cursor)
+	if M.is_highlighting then
+		return
+	end
+	M.is_highlighting = true
+
+	-- 3. Setup Context
+	local winid = view.get_winnr and view.get_winnr() or vim.fn.bufwinid(bufnr)
+	local original_cursor = vim.api.nvim_win_get_cursor(winid)
+	local line_count = vim.api.nvim_buf_line_count(bufnr)
+	local cwd = vim.fn.getcwd()
+
+	-- 4. Clear old highlights
 	vim.api.nvim_buf_clear_namespace(bufnr, ns_id, 0, -1)
 
-	-- Get all lines in the buffer
-	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+	-- 5. Scan the Tree
+	-- We wrap in pcall to ensure we ALWAYS restore the cursor/state
+	pcall(function()
+		-- Suppress events to prevent flickering and recursion
+		local old_ei = vim.o.eventignore
+		vim.o.eventignore = "all"
 
-	for line_num, line_content in ipairs(lines) do
-		-- Skip empty lines and tree structure characters
-		if line_content:match("%S") and not line_content:match("^[│├└─ ]*$") then
-			-- Extract the filename from the line
-			local filename = line_content:match("([^│├└─ /\\\\]+)%s*$")
+		for i = 1, line_count do
+			-- A. Move cursor to the line
+			vim.api.nvim_win_set_cursor(winid, { i, 0 })
 
-			if filename and filename ~= "" then
-				local is_selected = false
+			-- B. Ask the public API: "What is here?"
+			local node = api.tree.get_node_under_cursor()
 
-				-- Check this filename against our selected files
-				for selected_path, _ in pairs(selected_files) do
-					-- STRICT CHECK:
-					-- 1. Must end with the filename
-					-- 2. Must be preceded by a separator OR be the exact full string
-					-- This prevents "sub_main.lua" matching "main.lua"
+			-- C. Check if valid file
+			if node and node.absolute_path and node.type == "file" then
+				local check_path = node.absolute_path
 
-					local escaped_filename = vim.pesc(filename)
+				-- D. Check against selection (Absolute)
+				local is_selected = selected_files[check_path]
 
-					-- Check if path ends with /filename (standard case)
-					if
-						selected_path:match("[/\\]" .. escaped_filename .. "$")
-						-- Check if path IS the filename (files in root)
-						or selected_path == filename
-						-- Check relative path ./filename
-						or selected_path == "./" .. filename
-					then
-						is_selected = true
-						break
-					end
+				-- E. Check against selection (Relative)
+				if not is_selected and check_path:sub(1, #cwd) == cwd then
+					local rel_path = "." .. check_path:sub(#cwd + 1)
+					is_selected = selected_files[rel_path]
 				end
 
+				-- F. Apply Highlight
 				if is_selected then
-					-- Add highlight to the entire line
-					vim.api.nvim_buf_add_highlight(bufnr, ns_id, "ConcatFilesSelected", line_num - 1, 0, -1)
+					vim.api.nvim_buf_add_highlight(bufnr, ns_id, "ConcatFilesSelected", i - 1, 0, -1)
 
-					-- Find position for checkmark (just before the filename)
-					local col_start = line_content:find(filename, 1, true) or 1
-					if col_start > 1 then
+					-- Icon placement
+					local line_content = vim.api.nvim_buf_get_lines(bufnr, i - 1, i, false)[1]
+					local filename = vim.fn.fnamemodify(node.absolute_path, ":t")
+					local col_start = line_content:find(filename, 1, true) or 0
+					if col_start > 0 then
 						col_start = col_start - 1
 					end
 
-					-- Add checkmark
-					vim.api.nvim_buf_set_extmark(bufnr, ns_id, line_num - 1, col_start, {
+					vim.api.nvim_buf_set_extmark(bufnr, ns_id, i - 1, col_start, {
 						virt_text = { { "✅ ", "ConcatFilesSelectedIcon" } },
 						virt_text_pos = "inline",
 						priority = 100,
@@ -356,7 +370,15 @@ local function highlight_selected_files()
 				end
 			end
 		end
-	end
+
+		-- Restore eventignore
+		vim.o.eventignore = old_ei
+	end)
+
+	-- 6. Restore original cursor position
+	vim.api.nvim_win_set_cursor(winid, original_cursor)
+
+	M.is_highlighting = false
 end
 
 -- Function to create highlight groups
