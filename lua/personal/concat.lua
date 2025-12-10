@@ -194,12 +194,22 @@ local function telescope_file_picker()
 			-- Select all files with Ctrl+A
 			local function select_all()
 				local count_before = vim.tbl_count(selected_files)
+
+				-- FIX: Check if file exists before selecting
 				for _, file in ipairs(files) do
-					selected_files[file] = true
+					-- vim.fn.filereadable returns 1 if file exists and is readable
+					if vim.fn.filereadable(file) == 1 then
+						selected_files[file] = true
+					end
 				end
+
 				local count_after = vim.tbl_count(selected_files)
+
+				-- Calculate actual new files (ignoring deleted ones that might have been in the list)
+				local added_count = count_after - count_before
+
 				vim.notify(
-					"✅ Selected all " .. #files .. " files (+" .. (count_after - count_before) .. " new)",
+					"✅ Selected " .. count_after .. " valid files (+" .. added_count .. " new)",
 					vim.log.levels.INFO
 				)
 
@@ -278,7 +288,7 @@ local function telescope_file_picker()
 end
 
 -- Function to highlight selected files in nvim-tree
--- Simplified and more reliable highlight function
+-- FIX: Removed basename caching to prevent identical filenames colliding
 local function highlight_selected_files()
 	local view = require("nvim-tree.view")
 	if not view.is_visible() then
@@ -293,67 +303,37 @@ local function highlight_selected_files()
 	-- Clear existing highlights
 	vim.api.nvim_buf_clear_namespace(bufnr, ns_id, 0, -1)
 
-	-- Get current working directory
-	local cwd = vim.fn.getcwd()
-
-	-- Create a set of all selected file basenames and relative paths for quick lookup
-	local selected_basenames = {}
-	local selected_relpaths = {}
-
-	for file_path, _ in pairs(selected_files) do
-		-- Store basename
-		local basename = vim.fn.fnamemodify(file_path, ":t")
-		selected_basenames[basename] = file_path
-
-		-- Store relative path variations
-		local relpath = file_path
-		if relpath:sub(1, 2) == "./" then
-			relpath = relpath:sub(3)
-		end
-		selected_relpaths[relpath] = file_path
-		selected_relpaths[file_path] = file_path
-	end
-
 	-- Get all lines in the buffer
 	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 
 	for line_num, line_content in ipairs(lines) do
-		-- Skip empty lines and lines that don't contain files
+		-- Skip empty lines and tree structure characters
 		if line_content:match("%S") and not line_content:match("^[│├└─ ]*$") then
-			-- Extract the filename from the end of the line
+			-- Extract the filename from the line
 			local filename = line_content:match("([^│├└─ /\\\\]+)%s*$")
 
 			if filename and filename ~= "" then
-				-- Check if this filename matches any of our selected files
 				local is_selected = false
-				local matched_path = nil
 
-				-- First, try exact basename match
-				if selected_basenames[filename] then
-					is_selected = true
-					matched_path = selected_basenames[filename]
-				else
-					-- Try to build the relative path by looking at the tree structure
-					-- This is a simplified approach - we'll match by filename for now
-					-- and verify it's the right file by checking if it exists
-					for selected_path, _ in pairs(selected_files) do
-						if selected_path:match(filename .. "$") then
-							-- Verify the file exists at this path
-							local full_path = selected_path
-							if not full_path:match("^/") then
-								if full_path:sub(1, 2) == "./" then
-									full_path = cwd .. "/" .. full_path:sub(3)
-								else
-									full_path = cwd .. "/" .. full_path
-								end
-							end
+				-- Check this filename against our selected files
+				for selected_path, _ in pairs(selected_files) do
+					-- STRICT CHECK:
+					-- 1. Must end with the filename
+					-- 2. Must be preceded by a separator OR be the exact full string
+					-- This prevents "sub_main.lua" matching "main.lua"
 
-							if vim.fn.filereadable(full_path) == 1 then
-								is_selected = true
-								matched_path = selected_path
-								break
-							end
-						end
+					local escaped_filename = vim.pesc(filename)
+
+					-- Check if path ends with /filename (standard case)
+					if
+						selected_path:match("[/\\]" .. escaped_filename .. "$")
+						-- Check if path IS the filename (files in root)
+						or selected_path == filename
+						-- Check relative path ./filename
+						or selected_path == "./" .. filename
+					then
+						is_selected = true
+						break
 					end
 				end
 
@@ -362,7 +342,7 @@ local function highlight_selected_files()
 					vim.api.nvim_buf_add_highlight(bufnr, ns_id, "ConcatFilesSelected", line_num - 1, 0, -1)
 
 					-- Find position for checkmark (just before the filename)
-					local col_start = line_content:find(filename) or 1
+					local col_start = line_content:find(filename, 1, true) or 1
 					if col_start > 1 then
 						col_start = col_start - 1
 					end
@@ -685,7 +665,10 @@ function M.return_to_nvim_tree_selection()
 	})
 
 	highlight_selected_files()
-	vim.notify("🌲 Returned to file selection mode. Selected: " .. vim.tbl_count(selected_files) .. " files", vim.log.levels.INFO)
+	vim.notify(
+		"🌲 Returned to file selection mode. Selected: " .. vim.tbl_count(selected_files) .. " files",
+		vim.log.levels.INFO
+	)
 end
 
 -- Enhanced options menu with back navigation
