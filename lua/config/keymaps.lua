@@ -248,9 +248,6 @@ desc_map("n", "<Leader>gdu", ":diffupdate<CR>", "Git: Update diff highlighting")
 -- File explorer with Ranger
 desc_map("n", "<Leader>fr", ":RnvimrToggle<CR>", "Files: Ranger explorer")
 
--- Live preview for Markdown, HTML, AsciiDoc, SVG
-desc_map("n", "<Leader>cm", ":LivePreview<CR>", "Code: Live preview")
-
 -- Reload config
 desc_map("n", "<Leader>cr", ":ReloadConfig<CR>", "Config: Reload configuration")
 
@@ -618,8 +615,8 @@ desc_map("n", "<Leader>td", function()
 end, "Tasks: Start dev task")
 
 -- Live Preview for Markdown, HTML, AsciiDoc, SVG
-desc_map("n", "<Leader>cm", ":LivePreview<CR>", "Code: Live preview")
-desc_map("n", "<Leader>cM", ":LivePreviewStop<CR>", "Code: Close live preview")
+desc_map("n", "<Leader>cm", ":LivePreview start<CR>", "Code: Live preview")
+desc_map("n", "<Leader>cM", ":LivePreview close<CR>", "Code: Close live preview")
 desc_map("n", "<Leader>ct", ":LivePreviewToggle<CR>", "Code: Toggle live preview")
 
 -- Help/Documentation shortcuts
