@@ -320,7 +320,7 @@ desc_map("n", "<Leader>LA", function()
 	-- Create a custom authentication helper
 	local function show_auth_instructions()
 		local lines = {
-			"í ½íº€ LeetCode Authentication Guide",
+			"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ LeetCode Authentication Guide",
 			"",
 			"To use LeetCode features, you need to authenticate:",
 			"",
@@ -618,8 +618,8 @@ desc_map("n", "<Leader>td", function()
 end, "Tasks: Start dev task")
 
 -- Live Preview for Markdown, HTML, AsciiDoc, SVG
-desc_map("n", "<Leader>cm", ":LivePreview start<CR>", "Code: Live preview")
-desc_map("n", "<Leader>cM", ":LivePreview close<CR>", "Code: Close live preview")
+desc_map("n", "<Leader>cm", ":LivePreview<CR>", "Code: Live preview")
+desc_map("n", "<Leader>cM", ":LivePreviewStop<CR>", "Code: Close live preview")
 desc_map("n", "<Leader>ct", ":LivePreviewToggle<CR>", "Code: Toggle live preview")
 
 -- Help/Documentation shortcuts

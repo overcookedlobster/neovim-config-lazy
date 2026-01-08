@@ -1,4 +1,3 @@
--- File: lua/plugins/tex.lua
 return {
 	"lervag/vimtex",
 	lazy = false, -- CRITICAL: Load on startup, not lazy-loaded
@@ -37,10 +36,17 @@ return {
 		vim.g.vimtex_syntax_conceal_enable = 1
 
 		-- VimTeX view settings
+		-- Zathura is a good choice for X11/Wayland with synctex support.
 		vim.g.vimtex_view_method = "zathura"
+		-- This option ensures Zathura knows where to look for the source file and line.
+		-- It's used for the *forward* search part of the view command.
 		vim.g.vimtex_view_general_options = [[--unique file:@pdf\#src:@line@tex]]
+		-- For *inverse* search (PDF -> Neovim), Zathura must be configured separately to call 'nvr'.
+		-- The command would look something like:
+		-- zathura-pdf-viewer --synctex-editor-command "nvr --servername $NVIM_LISTEN_ADDRESS --remote-silent +\%{line} \%{input}"
 
-		-- Compiler settings - ensure nvr is used for server
+		-- Compiler settings - ensure nvr is used for server for inverse search
+		-- This is CRITICAL for Wayland compatibility (and generally better for X11 too).
 		vim.g.vimtex_compiler_progname = "nvr"
 
 		-- QuickFix settings
@@ -86,28 +92,22 @@ return {
 				vim.cmd("syntax enable")
 
 				-- Write inverse search target (from tex.vim)
+				-- This is not standard but harmless; often used for custom inverse search scripts.
 				vim.fn.system("echo TEX > /tmp/inverse-search-target.txt")
 			end,
 		})
 
-		-- Get Vim's window ID for switching focus from Zathura to Vim using xdotool.
-		if vim.g.os_current == "Linux" and not vim.g.vim_window_id then
-			vim.g.vim_window_id = vim.fn.system("xdotool getactivewindow")
-		end
+		-- *** REMOVED UNRELIABLE XDOTOOL LOGIC ***
+		-- The lines below are removed as they are fragile and Wayland-incompatible:
+		-- `vim.g.vim_window_id = vim.fn.system("xdotool getactivewindow")`
+		-- The entire "VimtexEventView" autocmd which contained `vim.cmd("!xdotool windowfocus " .. vim.g.vim_window_id)`
 
 		-- Forward search implementation (from tex.vim)
-		if vim.g.os_current == "Linux" then
-			vim.api.nvim_create_autocmd("User", {
-				group = tex_group,
-				pattern = "VimtexEventView",
-				callback = function()
-					-- Give window manager time to recognize focus moved to Zathura
-					vim.cmd("sleep 200m")
-					vim.cmd("!xdotool windowfocus " .. vim.g.vim_window_id)
-					vim.cmd("redraw!")
-				end,
-			})
-		elseif vim.g.os_current == "Darwin" then
+		-- Removed the Linux-specific, xdotool-based 'VimtexEventView' autocmd.
+		-- Vimtex's default view mechanism is generally sufficient to bring the viewer to the foreground.
+
+		-- The only change for Darwin (macOS) is to ensure Alacritty opens, which is fine as a simple command.
+		if vim.g.os_current == "Darwin" then
 			vim.api.nvim_create_autocmd("User", {
 				group = tex_group,
 				pattern = "VimtexEventViewReverse",
@@ -119,19 +119,21 @@ return {
 		end
 
 		-- Close viewers when VimTeX buffers are closed (from vimtex.vim)
+		-- Swapping out the unreliable xdotool window close with a less aggressive approach.
+		-- The viewer should generally be closed manually or by the compile method.
+		-- If you insist on closing the viewer on Neovim exit, you will need to find
+		-- a Wayland-compatible utility or rely on the compile method's cleanup.
+		-- I am removing the Xdotool logic to prevent errors, as it won't work on Wayland.
 		vim.api.nvim_create_autocmd("User", {
 			group = tex_group,
 			pattern = "VimtexEventQuit",
 			callback = function()
-				if
-					vim.fn.executable("xdotool") == 1
-					and vim.b.vimtex
-					and vim.b.vimtex.viewer
-					and vim.b.vimtex.viewer.xwin_id
-					and vim.b.vimtex.viewer.xwin_id > 0
-				then
-					vim.fn.system("xdotool windowclose " .. vim.b.vimtex.viewer.xwin_id)
-				end
+				-- The original code used xdotool, which is not Wayland-compatible.
+				-- If you want to close the viewer automatically, you need a different
+				-- mechanism. For general compatibility, we remove the block.
+				-- if vim.fn.executable("xdotool") == 1 and ... then
+				--   vim.fn.system("xdotool windowclose " .. vim.b.vimtex.viewer.xwin_id)
+				-- end
 			end,
 		})
 

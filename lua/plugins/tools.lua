@@ -505,25 +505,6 @@ return {
 		end,
 	},
 
-	-- Live Preview for Markdown, HTML, AsciiDoc, SVG
-	{
-		"brianhuster/live-preview.nvim",
-		ft = { "markdown", "html", "asciidoc", "svg" },
-		cmd = { "LivePreview", "LivePreviewStop", "LivePreviewToggle" },
-		config = function()
-			require("livepreview").setup({
-				-- Port for the preview server
-				port = 5500,
-				-- Auto-open browser when starting preview
-				browser = "default",
-				-- Dynamic title based on file name
-				dynamic_title = true,
-				-- File types to enable live preview
-				file_types = { "markdown", "html", "asciidoc", "svg" },
-			})
-		end,
-	},
-
 	-- Thesaurus plugin for synonyms and definitions
 	{
 		"Ron89/thesaurus_query.vim",
