@@ -9,7 +9,14 @@ local function desc_map(mode, lhs, rhs, description, map_opts)
 	local merged_opts = vim.tbl_extend("force", opts, map_opts or {}, { desc = description })
 	map(mode, lhs, rhs, merged_opts)
 end
-
+-- Structural Trace: See where a signal goes without jumping
+vim.keymap.set("n", "<leader>st", function()
+	require("telescope.builtin").lsp_references({
+		include_declaration = true,
+		show_line = true,
+		fname_width = 40,
+	})
+end, { desc = "Signal Trace: Find all structural references" })
 -- Window navigation
 desc_map("n", "<C-h>", "<C-w>h", "Move to left window")
 desc_map("n", "<C-j>", "<C-w>j", "Move to bottom window")
@@ -344,14 +351,14 @@ desc_map("n", "<Leader>LA", function()
 			"• <Leader>Ls - Submit solution",
 			"• <Leader>Ld - Daily challenge",
 			"",
-			"Press 'q' to close this help, or Enter to start authentication"
+			"Press 'q' to close this help, or Enter to start authentication",
 		}
 
 		-- Create a scratch buffer for instructions
 		local buf = vim.api.nvim_create_buf(false, true)
 		vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-		vim.api.nvim_buf_set_option(buf, 'modifiable', false)
-		vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
+		vim.api.nvim_buf_set_option(buf, "modifiable", false)
+		vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
 
 		-- Create a floating window
 		local width = 70
@@ -360,29 +367,29 @@ desc_map("n", "<Leader>LA", function()
 		local col = math.floor((vim.o.columns - width) / 2)
 
 		local win = vim.api.nvim_open_win(buf, true, {
-			relative = 'editor',
+			relative = "editor",
 			width = width,
 			height = height,
 			row = row,
 			col = col,
-			style = 'minimal',
-			border = 'rounded',
-			title = ' LeetCode Setup ',
-			title_pos = 'center'
+			style = "minimal",
+			border = "rounded",
+			title = " LeetCode Setup ",
+			title_pos = "center",
 		})
 
 		-- Set up keymaps for the help window
 		local opts = { buffer = buf, silent = true }
-		vim.keymap.set('n', 'q', function()
+		vim.keymap.set("n", "q", function()
 			vim.api.nvim_win_close(win, true)
 		end, opts)
 
-		vim.keymap.set('n', '<CR>', function()
+		vim.keymap.set("n", "<CR>", function()
 			vim.api.nvim_win_close(win, true)
 			vim.cmd("Leet")
 		end, opts)
 
-		vim.keymap.set('n', '<Esc>', function()
+		vim.keymap.set("n", "<Esc>", function()
 			vim.api.nvim_win_close(win, true)
 		end, opts)
 	end
@@ -402,7 +409,10 @@ desc_map("n", "<Leader>LL", function()
 			if ok then
 				-- This will require a restart or reconfiguration
 				vim.notify("Language set to: " .. choice, vim.log.levels.INFO)
-				vim.notify("Note: You may need to restart Neovim for language change to take effect", vim.log.levels.WARN)
+				vim.notify(
+					"Note: You may need to restart Neovim for language change to take effect",
+					vim.log.levels.WARN
+				)
 			end
 		end
 	end)

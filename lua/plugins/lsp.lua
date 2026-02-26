@@ -2,6 +2,14 @@
 -- LSP-related plugins
 
 return {
+	{
+		"hudson-trading/slang-server.nvim",
+		dependencies = {
+			"MunifTanjim/nui.nvim",
+		},
+		opts = {},
+		event = "LspAttach", -- loads exactly when slang-server attaches
+	},
 	-- LSP Configuration
 	{
 		"williamboman/mason.nvim", -- Portable package manager for Neovim
@@ -34,7 +42,8 @@ return {
 					"flake8", -- Python linter (install via Mason)
 					"eslint_d", -- JavaScript/TypeScript linter (eslint daemon)
 					"luacheck", -- Lua linter
-					"svls", -- Verilog and SV
+					"verible", -- Verilog and SV
+					-- "svls", -- Verilog and SV
 
 					-- Note: verilator needs to be installed separately as it's not in Mason
 					-- Install verilator with: sudo apt-get install verilator (Ubuntu/Debian)
@@ -44,10 +53,41 @@ return {
 				run_on_start = true,
 			})
 
+			-- Custom safe definition handler to prevent crashes from missing URIs
+			local function safe_definition_handler(err, result, ctx, config)
+				if not result then
+					return vim.lsp.handlers["textDocument/definition"](err, result, ctx, config)
+				end
+
+				-- Filter out results missing a URI (common with Slang's built-in macros)
+				local safe_result = {}
+				if vim.islist(result) then
+					for _, loc in ipairs(result) do
+						if loc.uri or loc.targetUri then
+							table.insert(safe_result, loc)
+						end
+					end
+					-- If everything was filtered out, return nil to say "no definition found"
+					if #safe_result == 0 then
+						safe_result = nil
+					end
+				else
+					if result.uri or result.targetUri then
+						safe_result = result
+					else
+						safe_result = nil
+					end
+				end
+
+				return vim.lsp.handlers["textDocument/definition"](err, safe_result, ctx, config)
+			end
+
 			-- LSP handlers configuration
 			local handlers = {
 				["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "rounded" }),
 				["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = "rounded" }),
+				-- Add our new safe handler here:
+				["textDocument/definition"] = safe_definition_handler,
 			}
 
 			-- Set diagnostic signs using the modern API
@@ -81,6 +121,35 @@ return {
 
 			-- Global LSP on_attach function
 			local on_attach = function(client, bufnr)
+				if client.name == "slangd" then
+					local orig_handler = client.handlers["textDocument/definition"]
+						or vim.lsp.handlers["textDocument/definition"]
+					client.handlers["textDocument/definition"] = function(err, result, ctx, config)
+						if result == nil then
+							return
+						end
+
+						-- If it's a list, filter out entries without URIs
+						if vim.islist(result) then
+							local filtered = {}
+							for _, val in ipairs(result) do
+								if val.uri or val.targetUri then
+									table.insert(filtered, val)
+								end
+							end
+							if #filtered == 0 then
+								return
+							end
+							result = filtered
+						else
+							-- If it's a single object, check for URI
+							if not (result.uri or result.targetUri) then
+								return
+							end
+						end
+						orig_handler(err, result, ctx, config)
+					end
+				end
 				-- Enable completion triggered by <c-x><c-o>
 				vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
 
@@ -253,6 +322,48 @@ return {
 					".git",
 				},
 			})
+			-- Slang Language Server (The superior SystemVerilog LSP)
+			-- vim.lsp.config("slangd", {
+			-- 	cmd = { "slangd" },
+			-- 	filetypes = { "systemverilog", "verilog" },
+			-- 	-- slang looks for slang project files or standard root markers
+			-- 	root_markers = { "slang.cmd", ".git" },
+			-- 	settings = {},
+			-- })
+
+			vim.lsp.config("slang-server", {
+				cmd = { "slang-server" },
+				filetypes = { "systemverilog", "verilog" },
+				root_markers = { ".slang", "verible.filelist", ".git" },
+				filetypes = {
+					"systemverilog",
+					"verilog",
+				},
+				-- These settings are specific to the hudson-trading version
+				settings = {
+					slang = {
+						inlayHints = {
+							parameterNames = true,
+							variableTypes = true,
+						},
+					},
+				},
+			})
+
+			-- Verible Language Server Configuration
+			vim.lsp.config("verible", {
+				cmd = { "verible-verilog-ls", "--rules_config_search" },
+				filetypes = { "verilog", "systemverilog" },
+				root_markers = { "verible.filelist", ".git" },
+				-- This ensures Verible knows where to look for include files
+				settings = {
+					verible = {
+						-- You can add specific indexing limits here if your project is massive
+					},
+				},
+			})
+
+			-- Enable it
 
 			-- SystemVerilog Language Server
 			vim.lsp.config("svls", {
@@ -262,22 +373,25 @@ return {
 				settings = {},
 			})
 
-						-- Xilinx Language Server
-						vim.lsp.config("xilinx", {
-						  cmd = { "xilinx-language-server" },
-						  filetypes = { "xdc", "xsct" },
-						  root_markers = { ".git" },
-						  init_options = {
-						    method = "builtin",
-						  },
-						})
-				
+			-- Xilinx Language Server
+			vim.lsp.config("xilinx", {
+				cmd = { "xilinx-language-server" },
+				filetypes = { "xdc", "xsct" },
+				root_markers = { ".git" },
+				init_options = {
+					method = "builtin",
+				},
+			})
+
 			-- Enable LSP servers
 			vim.lsp.enable("lua_ls")
 			vim.lsp.enable("pyright")
 			vim.lsp.enable("clangd")
-			vim.lsp.enable("svls")
-					vim.lsp.enable("xilinx")
+			-- vim.lsp.enable("svls")
+			-- vim.lsp.enable("verible")
+			-- vim.lsp.enable("slangd") -- <-- ENABLE SLANGD
+			vim.lsp.enable("slang-server")
+			vim.lsp.enable("xilinx")
 
 			-- Set up LspAttach autocmd for buffer-local configurations
 			vim.api.nvim_create_autocmd("LspAttach", {
@@ -342,6 +456,8 @@ return {
 					javascript = { { "prettierd", "prettier" } },
 					typescript = { { "prettierd", "prettier" } },
 					json = { { "prettierd", "prettier" } },
+					systemverilog = { "verible" },
+					verilog = { "verible" },
 				},
 				format_on_save = {
 					timeout_ms = 500,
@@ -642,4 +758,18 @@ return {
 			})
 		end,
 	},
+	-- Custom command to check attached LSPs (since we aren't using nvim-lspconfig)
+	vim.api.nvim_create_user_command("LspStatus", function()
+		local clients = vim.lsp.get_clients({ bufnr = 0 })
+		if #clients == 0 then
+			print("No LSP clients attached to this buffer.")
+			return
+		end
+
+		local names = {}
+		for _, client in ipairs(clients) do
+			table.insert(names, client.name)
+		end
+		print("Attached LSPs: " .. table.concat(names, ", "))
+	end, { desc = "Show attached LSP clients for current buffer" }),
 }

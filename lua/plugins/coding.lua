@@ -279,19 +279,68 @@ return {
 	-- Live preview for Markdown, HTML, AsciiDoc, SVG
 	{
 		"brianhuster/live-preview.nvim",
-		ft = { "markdown", "html", "asciidoc", "svg" },
 		cmd = { "LivePreview", "LivePreviewStop", "LivePreviewToggle" },
 		config = function()
 			require("livepreview").setup({
 				-- Port for the preview server
-				port = 5500,
+				port = 5501,
 				-- Auto-open browser when starting preview
 				browser = "default",
 				-- Dynamic title based on file name
 				dynamic_title = true,
+				-- Sync scrolling
+				sync_scroll = true,
 				-- File types to enable live preview
 				file_types = { "markdown", "html", "asciidoc", "svg" },
 			})
+
+			-- Auto-close preview when buffer is closed
+			vim.api.nvim_create_autocmd("BufUnload", {
+				pattern = { "*.md", "*.html", "*.adoc", "*.svg" },
+				callback = function()
+					pcall(vim.cmd, "LivePreviewStop")
+				end,
+			})
+
+			-- Monkey-patch Server:stop to prevent "attempt to index field 'server' (a nil value)" error
+			-- This error happens when the server object is in an inconsistent state during shutdown
+			local server = require("livepreview.server")
+			local original_stop = server.Server.stop
+
+			server.Server.stop = function(self, callback)
+				if self.server then
+					-- Safely close with error handling
+					local safe_close = function()
+						self.server = nil
+						if callback then
+							callback()
+						end
+					end
+
+					local ok, _ = pcall(function()
+						self.server:close(safe_close)
+					end)
+
+					if not ok then
+						self.server = nil
+						if callback then
+							callback()
+						end
+					end
+				else
+					if callback then
+						callback()
+					end
+				end
+
+				if self._watcher then
+					pcall(function()
+						self._watcher:close()
+					end)
+				end
+				self._watcher = nil
+				vim.api.nvim_del_augroup_by_name("LivePreview")
+			end
 		end,
 	},
 
