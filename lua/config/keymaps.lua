@@ -138,8 +138,15 @@ desc_map("n", "<Leader>gF", ":Git fetch<CR>", "Git: Fetch")
 desc_map("n", "<Leader>gd", ":Gdiffsplit<CR>", "Git: Diff working tree (split)")
 desc_map("n", "<Leader>gD", ":Gdiffsplit --cached<CR>", "Git: Diff staged (split)")
 desc_map("n", "<Leader>gdh", ":Gdiffsplit HEAD<CR>", "Git: Diff against HEAD (split)")
-desc_map("n", "<Leader>gdf", ":Gdiffsplit", "Git: Diff current file (split)")
-desc_map("n", "<Leader>gdv", ":Gvdiffsplit", "Git: Diff vertical split")
+desc_map("n", "<Leader>gdf", ":Gdiffsplit ", "Git: Diff current file (split)")
+desc_map("n", "<Leader>gdv", ":Gvdiffsplit ", "Git: Diff vertical split")
+desc_map("n", "<Leader>gdc", function()
+    vim.ui.input({ prompt = 'Commit Hash to diff against: ' }, function(input)
+        if input and input ~= '' then
+            vim.cmd('Gvdiffsplit ' .. input)
+        end
+    end)
+end, "Git: Prompt for diff commit")
 desc_map("n", "<Leader>gdt", ":Git difftool<CR>", "Git: Open difftool")
 
 -- Git log operations (Fugitive)
