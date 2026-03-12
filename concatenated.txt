@@ -1,0 +1,3112 @@
+# 📁 File Concatenation Report
+
+**Generated:** 2026-03-10 18:13:26
+**Total Files:** 7
+**Output:** concatenated.txt
+
+---
+
+## 📄 ./init.lua
+
+```lua
+-- ~/.config/nvim/init.lua
+-- Main entry point for Neovim configuration
+-- Add this to your init.lua (at the very top)
+vim.g.jukit_enable_textcell_bg = 0 -- Disable the feature causing errors
+vim.g.jukit_text_syntax_file = vim.fn.expand("$VIMRUNTIME/syntax/text.vim")
+-- Set leader keys early to ensure consistent behavior
+vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
+-- Ensure vim-jukit can find Python
+vim.g.jukit_python_mode = 1
+vim.g.jukit_shell_cmd = "ipython3"
+
+-- Add a small delay before initializing jukit
+-- CHECK IF JUKIT HAVING PROBLEM
+-- vim.defer_fn(function()
+--   if vim.fn.has('python3') == 1 then
+--     vim.notify("Python3 support confirmed for vim-jukit")
+--   end
+-- end, 1000)
+-- Load initialization hooks early
+require("init-hook").setup()
+-- Set the Python provider path explicitly
+-- Add near the top of init.lua (before loading lazy.nvim)
+vim.g.python3_host_prog = "/usr/bin/python3"
+
+-- Create a Python status check function
+-- CHECK IF JUKIT HAVING PROBLEM
+-- vim.defer_fn(function()
+--   if vim.fn.has('python3') == 1 then
+--     vim.notify("Python3 support confirmed")
+--   else
+--     vim.notify("Python3 support is NOT available!", vim.log.levels.WARN)
+--   end
+-- end, 500)
+-- Optionally disable the health check
+-- vim.g.loaded_python3_provider = 1
+-- Detect operating system
+local has = vim.fn.has
+vim.g.os_current = nil
+if has("mac") == 1 or has("macunix") == 1 then
+	vim.g.os_current = "Darwin"
+elseif has("unix") == 1 then
+	vim.g.os_current = "Linux"
+elseif has("win32") == 1 or has("win64") == 1 then
+	vim.g.os_current = "Windows"
+end
+
+-- Bootstrap lazy.nvim
+require("config.lazy")
+
+-- Load core modules
+require("config.options") -- Vim options
+require("config.keymaps") -- Global keymaps
+require("config.autocmds") -- Autocommands
+
+-- Load utility modules
+require("utils")
+
+-- Load personal modules
+local ok, personal_module = pcall(require, "personal")
+if ok and personal_module then
+	personal_module.setup()
+else
+	vim.notify("Failed to load personal modules: " .. tostring(personal_module), vim.log.levels.WARN)
+end
+
+-- Smart clipboard that works on X11 AND Wayland (Niri, Hyprland, etc.)
+-- Automatically picks the right backend — no more manual changes when switching!
+local function get_clipboard_backend()
+	-- Wayland first (most people are here in 2025)
+	if os.getenv("WAYLAND_DISPLAY") or os.getenv("HYPRLAND_INSTANCE_SIGNATURE") then
+		return {
+			name = "wl-clipboard",
+			copy = {
+				["+"] = "wl-copy",
+				["*"] = "wl-copy",
+			},
+			paste = {
+				["+"] = "wl-paste --no-newline",
+				["*"] = "wl-paste --no-newline",
+			},
+			cache_enabled = 0,
+		}
+	end
+
+	-- Fallback to X11
+	if os.getenv("DISPLAY") then
+		return {
+			name = "xsel",
+			copy = {
+				["+"] = "xsel --nodetach -i -b",
+				["*"] = "xsel --nodetach -i -p",
+			},
+			paste = {
+				["+"] = "xsel -o -b",
+				["*"] = "xsel -o -p",
+			},
+			cache_enabled = 1,
+		}
+	end
+
+	-- If neither (unlikely), fall back to internal only
+	return nil
+end
+
+vim.g.clipboard = get_clipboard_backend() or vim.g.clipboard
+
+-- Bonus: make yy/dd/p always use system clipboard (this is the modern way)
+vim.opt.clipboard = "unnamedplus"
+
+vim.g.mkdp_browserfunc = function(url)
+	vim.fn.system("firefox --new-window " .. url .. " &")
+end
+```
+
+## 📄 ./lua/personal/init.lua
+
+```lua
+-- ~/.config/nvim/lua/personal/init.lua
+-- Personal modules loader
+
+local M = {}
+
+-- Helper function to safely require a module
+local function safe_require(module_name)
+  local ok, module = pcall(require, module_name)
+  if not ok then
+    vim.notify("Failed to load " .. module_name .. ": " .. tostring(module), vim.log.levels.WARN)
+    return nil
+  end
+  return module
+end
+
+-- Function to safely setup a module if it exists
+local function safe_setup(module_name, opts)
+  local module = safe_require(module_name)
+  if module and type(module.setup) == "function" then
+    local setup_ok, err = pcall(function()
+      if opts then
+        module.setup(opts)
+      else
+        module.setup()
+      end
+    end)
+
+    if not setup_ok then
+      vim.notify("Error setting up " .. module_name .. ": " .. tostring(err), vim.log.levels.ERROR)
+    end
+  end
+end
+
+-- Set up all personal modules
+function M.setup()
+  -- vim.notify("Setting up personal modules...")
+
+  -- Set up modules with error handling
+  safe_setup("personal.transient", {
+    width = 0.6,  -- 60% of screen width
+    height = 0.7, -- 70% of screen height
+    notes_dir = vim.fn.expand('~/Documents/my_notes/'),
+  })
+
+  safe_setup("personal.checklist")
+  safe_setup("personal.beamer")
+  safe_setup("personal.concat")
+  safe_setup("personal.spell")
+
+  -- vim.notify("Personal modules setup complete")
+end
+
+-- Return the module table (THIS LINE IS CRITICAL)
+return M
+```
+
+## 📄 ./lua/plugins/lsp.lua
+
+```lua
+-- ~/.config/nvim/lua/plugins/lsp.lua
+-- LSP-related plugins
+
+return {
+  {
+    "hudson-trading/slang-server.nvim",
+    dependencies = {
+      "MunifTanjim/nui.nvim",
+    },
+    ft = { "systemverilog", "verilog" }, -- loads exactly when you open .sv/.svh files
+    opts = {},
+  },
+  -- LSP Configuration
+  {
+    "williamboman/mason.nvim", -- Portable package manager for Neovim
+    event = { "BufReadPre", "BufNewFile" },
+    dependencies = {
+      "hrsh7th/cmp-nvim-lsp",                   -- LSP completion
+      "WhoIsSethDaniel/mason-tool-installer.nvim", -- Auto-install tools
+    },
+    config = function()
+      -- Set up Mason
+      require("mason").setup({
+        ui = {
+          icons = {
+            package_installed = "✓",
+            package_pending = "➜",
+            package_uninstalled = "✗",
+          },
+        },
+      })
+      -- Set up mason-tool-installer to automatically install tools
+      require("mason-tool-installer").setup({
+        ensure_installed = {
+          -- Formatters
+          "stylua", -- Lua formatter
+          "prettier", -- JavaScript/TypeScript/JSON formatter
+          "prettierd", -- Faster prettier
+          -- "clang-format", -- C/C++ formatter
+          "lua-language-server",
+          -- Linters
+          "flake8", -- Python linter (install via Mason)
+          "eslint_d", -- JavaScript/TypeScript linter (eslint daemon)
+          "luacheck", -- Lua linter
+          "verible", -- Verilog and SV
+          -- "svls", -- Verilog and SV
+
+          -- Note: verilator needs to be installed separately as it's not in Mason
+          -- Install verilator with: sudo apt-get install verilator (Ubuntu/Debian)
+          -- or: brew install verilator (macOS)
+        },
+        auto_update = false,
+        run_on_start = true,
+      })
+
+      -- Custom safe definition handler to prevent crashes from missing URIs
+      local function safe_definition_handler(err, result, ctx, config)
+        if not result then
+          return vim.lsp.handlers["textDocument/definition"](err, result, ctx, config)
+        end
+
+        -- Filter out results missing a URI (common with Slang's built-in macros)
+        local safe_result = {}
+        if vim.islist(result) then
+          for _, loc in ipairs(result) do
+            if loc.uri or loc.targetUri then
+              table.insert(safe_result, loc)
+            end
+          end
+          -- If everything was filtered out, return nil to say "no definition found"
+          if #safe_result == 0 then
+            safe_result = nil
+          end
+        else
+          if result.uri or result.targetUri then
+            safe_result = result
+          else
+            safe_result = nil
+          end
+        end
+
+        return vim.lsp.handlers["textDocument/definition"](err, safe_result, ctx, config)
+      end
+
+      -- LSP handlers configuration
+      local handlers = {
+        ["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "rounded" }),
+        ["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = "rounded" }),
+        -- Add our new safe handler here:
+        ["textDocument/definition"] = safe_definition_handler,
+      }
+
+      -- Set diagnostic signs using the modern API
+      local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
+      for type, icon in pairs(signs) do
+        local hl = "DiagnosticSign" .. type
+        vim.api.nvim_set_hl(0, hl, { fg = "#ffffff" }) -- Set default colors if needed
+      end
+
+      -- Configure diagnostic signs in the diagnostic config
+      vim.diagnostic.config({
+        virtual_text = false,
+        signs = {
+          text = {
+            [vim.diagnostic.severity.ERROR] = signs.Error,
+            [vim.diagnostic.severity.WARN] = signs.Warn,
+            [vim.diagnostic.severity.HINT] = signs.Hint,
+            [vim.diagnostic.severity.INFO] = signs.Info,
+          },
+        },
+        underline = true,
+        update_in_insert = true, -- Enable updates while typing
+        severity_sort = true,
+        float = {
+          border = "rounded",
+          source = "if_many",
+          header = "",
+          prefix = "",
+        },
+      })
+
+      -- Global LSP on_attach function
+      local on_attach = function(client, bufnr)
+        if client.name == "slangd" then
+          local orig_handler = client.handlers["textDocument/definition"]
+              or vim.lsp.handlers["textDocument/definition"]
+          client.handlers["textDocument/definition"] = function(err, result, ctx, config)
+            if result == nil then
+              return
+            end
+
+            -- If it's a list, filter out entries without URIs
+            if vim.islist(result) then
+              local filtered = {}
+              for _, val in ipairs(result) do
+                if val.uri or val.targetUri then
+                  table.insert(filtered, val)
+                end
+              end
+              if #filtered == 0 then
+                return
+              end
+              result = filtered
+            else
+              -- If it's a single object, check for URI
+              if not (result.uri or result.targetUri) then
+                return
+              end
+            end
+            orig_handler(err, result, ctx, config)
+          end
+        end
+        -- Enable completion triggered by <c-x><c-o>
+        vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
+
+        -- Buffer local mappings
+        local opts = { noremap = true, silent = true, buffer = bufnr }
+        vim.keymap.set(
+          "n",
+          "gD",
+          vim.lsp.buf.declaration,
+          vim.tbl_extend("force", opts, { desc = "LSP: Go to declaration" })
+        )
+        vim.keymap.set(
+          "n",
+          "gd",
+          vim.lsp.buf.definition,
+          vim.tbl_extend("force", opts, { desc = "LSP: Go to definition" })
+        )
+        vim.keymap.set(
+          "n",
+          "K",
+          vim.lsp.buf.hover,
+          vim.tbl_extend("force", opts, { desc = "LSP: Hover information" })
+        )
+        vim.keymap.set(
+          "n",
+          "gi",
+          vim.lsp.buf.implementation,
+          vim.tbl_extend("force", opts, { desc = "LSP: Go to implementation" })
+        )
+        vim.keymap.set(
+          "n",
+          "<C-k>",
+          vim.lsp.buf.signature_help,
+          vim.tbl_extend("force", opts, { desc = "LSP: Signature help" })
+        )
+        vim.keymap.set(
+          "n",
+          "<space>D",
+          vim.lsp.buf.type_definition,
+          vim.tbl_extend("force", opts, { desc = "LSP: Type definition" })
+        )
+        vim.keymap.set(
+          "n",
+          "<space>rn",
+          vim.lsp.buf.rename,
+          vim.tbl_extend("force", opts, { desc = "LSP: Rename" })
+        )
+        vim.keymap.set(
+          { "n", "v" },
+          "<space>ca",
+          vim.lsp.buf.code_action,
+          vim.tbl_extend("force", opts, { desc = "LSP: Code action" })
+        )
+        vim.keymap.set(
+          "n",
+          "gr",
+          vim.lsp.buf.references,
+          vim.tbl_extend("force", opts, { desc = "LSP: References" })
+        )
+        vim.keymap.set("n", "<space>f", function()
+          require("conform").format({ async = true, lsp_fallback = true })
+        end, vim.tbl_extend("force", opts, { desc = "Format buffer with conform" }))
+
+        -- Enable inlay hints if supported (with proper version checking)
+        if client.server_capabilities.inlayHintProvider then
+          -- Check Neovim version for proper API support
+          if vim.fn.has("nvim-0.10.0") == 1 then
+            -- Safe call with pcall to prevent errors
+            pcall(function()
+              vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+            end)
+          end
+        end
+
+        -- Set up document highlight
+        if client.server_capabilities.documentHighlightProvider then
+          local group = vim.api.nvim_create_augroup("LSPDocumentHighlight", { clear = false })
+          vim.api.nvim_clear_autocmds({ buffer = bufnr, group = group })
+          vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+            buffer = bufnr,
+            group = group,
+            callback = vim.lsp.buf.document_highlight,
+          })
+          vim.api.nvim_create_autocmd("CursorMoved", {
+            buffer = bufnr,
+            group = group,
+            callback = vim.lsp.buf.clear_references,
+          })
+        end
+      end
+
+      -- Default capabilities
+      local capabilities = require("cmp_nvim_lsp").default_capabilities()
+
+      -- Configure LSP servers using vim.lsp.config (Neovim 0.11+)
+      -- This replaces the deprecated require('lspconfig') approach
+      -- Global configuration for all servers
+      vim.lsp.config("*", {
+        capabilities = capabilities,
+        handlers = handlers,
+        root_markers = { ".git" },
+      })
+
+      -- Lua Language Server
+      vim.lsp.config("lua_ls", {
+        cmd = { "lua-language-server" },
+        filetypes = { "lua" },
+        root_markers = { { ".luarc.json", ".luarc.jsonc" }, ".git" },
+        settings = {
+          Lua = {
+            diagnostics = {
+              globals = { "vim" }, -- Recognize 'vim' global
+            },
+            workspace = {
+              library = {
+                vim.env.VIMRUNTIME,
+                "${3rd}/luv/library",
+                "${3rd}/busted/library",
+              },
+              checkThirdParty = false,
+            },
+            telemetry = {
+              enable = false,
+            },
+          },
+        },
+      })
+
+      -- Python Language Server
+      vim.lsp.config("pyright", {
+        cmd = { "pyright-langserver", "--stdio" },
+        filetypes = { "python" },
+        root_markers = {
+          "pyproject.toml",
+          "setup.py",
+          "setup.cfg",
+          "requirements.txt",
+          "Pipfile",
+          "pyrightconfig.json",
+          ".git",
+        },
+        settings = {
+          python = {
+            analysis = {
+              typeCheckingMode = "basic",
+              autoSearchPaths = true,
+              useLibraryCodeForTypes = true,
+            },
+          },
+        },
+      })
+
+      -- C/C++ Language Server
+      vim.lsp.config("clangd", {
+        cmd = {
+          "clangd",
+          "--background-index",
+          "--suggest-missing-includes",
+          "--clang-tidy",
+          "--header-insertion=iwyu",
+        },
+        filetypes = { "c", "cpp", "objc", "objcpp", "cuda", "proto" },
+        root_markers = {
+          ".clangd",
+          ".clang-tidy",
+          ".clang-format",
+          "compile_commands.json",
+          "compile_flags.txt",
+          "configure.ac",
+          ".git",
+        },
+      })
+      -- Slang Language Server (The superior SystemVerilog LSP)
+      -- vim.lsp.config("slangd", {
+      -- 	cmd = { "slangd" },
+      -- 	filetypes = { "systemverilog", "verilog" },
+      -- 	-- slang looks for slang project files or standard root markers
+      -- 	root_markers = { "slang.cmd", ".git" },
+      -- 	settings = {},
+      -- })
+
+      vim.lsp.config("slang-server", {
+        cmd = { "slang-server" },
+        filetypes = { "systemverilog", "verilog" },
+        root_markers = { ".slang", "verible.filelist", ".git" },
+        filetypes = {
+          "systemverilog",
+          "verilog",
+        },
+        -- These settings are specific to the hudson-trading version
+        settings = {
+          slang = {
+            inlayHints = {
+              parameterNames = true,
+              variableTypes = true,
+            },
+          },
+        },
+      })
+
+      -- Verible Language Server Configuration
+      vim.lsp.config("verible", {
+        cmd = { "verible-verilog-ls", "--rules_config_search" },
+        filetypes = { "verilog", "systemverilog" },
+        root_markers = { "verible.filelist", ".git" },
+        -- This ensures Verible knows where to look for include files
+        settings = {
+          verible = {
+            -- You can add specific indexing limits here if your project is massive
+          },
+        },
+      })
+
+      -- Enable it
+
+      -- SystemVerilog Language Server
+      vim.lsp.config("svls", {
+        cmd = { "svls" },
+        filetypes = { "systemverilog", "verilog" },
+        root_markers = { ".svlint.toml", "svls.toml", ".svls.toml", ".git" },
+        settings = {},
+      })
+
+      -- Xilinx Language Server
+      vim.lsp.config("xilinx", {
+        cmd = { "xilinx-language-server" },
+        filetypes = { "xdc", "xsct" },
+        root_markers = { ".git" },
+        init_options = {
+          method = "builtin",
+        },
+      })
+
+      -- Enable LSP servers
+      vim.lsp.enable("lua_ls")
+      vim.lsp.enable("pyright")
+      vim.lsp.enable("clangd")
+      -- vim.lsp.enable("svls")
+      -- vim.lsp.enable("verible")
+      -- vim.lsp.enable("slangd") -- <-- ENABLE SLANGD
+      vim.lsp.enable("slang-server")
+      vim.lsp.enable("xilinx")
+
+      -- Set up LspAttach autocmd for buffer-local configurations
+      vim.api.nvim_create_autocmd("LspAttach", {
+        group = vim.api.nvim_create_augroup("UserLspConfig", {}),
+        callback = function(ev)
+          local client = vim.lsp.get_client_by_id(ev.data.client_id)
+          local bufnr = ev.buf
+
+          -- Call the on_attach function
+          on_attach(client, bufnr)
+
+          -- Special handling for SystemVerilog
+          if client and client.name == "svls" then
+            print("SystemVerilog LSP attached with enhanced context support")
+          end
+        end,
+      })
+
+      -- Add command to restart LSP servers
+      vim.api.nvim_create_user_command("LspRestart", function()
+        vim.lsp.stop_client(vim.lsp.get_clients())
+        vim.defer_fn(function()
+          -- Re-enable all servers
+          vim.lsp.enable("lua_ls")
+          vim.lsp.enable("pyright")
+          vim.lsp.enable("clangd")
+          vim.lsp.enable("svls")
+        end, 1000)
+      end, { desc = "Restart LSP servers" })
+      vim.api.nvim_create_user_command("SvlsStatus", function()
+        local clients = vim.lsp.get_active_clients({ name = "svls" })
+        if #clients > 0 then
+          print("SVLS is running. Root dir: " .. (clients[1].config.root_dir or "unknown"))
+        else
+          print("SVLS is not running")
+        end
+      end, { desc = "Check SVLS status" })
+    end,
+  },
+
+  -- Formatting with conform.nvim (modern alternative to null-ls)
+  {
+    "stevearc/conform.nvim",
+    event = { "BufWritePre" },
+    cmd = { "ConformInfo" },
+    keys = {
+      {
+        "<leader>f",
+        function()
+          require("conform").format({ async = true, lsp_fallback = true })
+        end,
+        desc = "Format buffer",
+      },
+    },
+    config = function()
+      require("conform").setup({
+        formatters_by_ft = {
+          lua = { "stylua" },
+          python = { "isort", "black" },
+          c = { "clang-format" },
+          cpp = { "clang-format" },
+          javascript = { { "prettierd", "prettier" } },
+          typescript = { { "prettierd", "prettier" } },
+          json = { { "prettierd", "prettier" } },
+          systemverilog = { "verible" },
+          verilog = { "verible" },
+        },
+        -- format_on_save = {
+        -- 	timeout_ms = 500,
+        -- 	lsp_fallback = true,
+        -- },
+      })
+    end,
+  },
+
+  -- Linting with nvim-lint (modern alternative to null-ls)
+  {
+    "mfussenegger/nvim-lint",
+    event = { "BufReadPre", "BufNewFile" },
+    config = function()
+      local lint = require("lint")
+
+      -- Configure linters by filetype
+      lint.linters_by_ft = {
+        python = { "flake8" },
+        javascript = { "eslint_d" },
+        typescript = { "eslint_d" },
+        lua = { "luacheck" },
+        -- SystemVerilog/Verilog linting with verilator
+        systemverilog = { "verilator" },
+        verilog = { "verilator" },
+      }
+
+      -- Configure verilator linter with custom settings
+      lint.linters.verilator = {
+        cmd = "verilator",
+        stdin = false,
+        args = {
+          "--lint-only",
+          "-Wall",
+          "-I" .. (os.getenv("UVM_HOME") or "") .. "/src",
+          function()
+            return vim.api.nvim_buf_get_name(0)
+          end,
+        },
+        stream = "stderr",
+        ignore_exitcode = true,
+        parser = function(output, bufnr)
+          local diagnostics = {}
+          -- Parse verilator output format
+          for line in output:gmatch("[^\n]+") do
+            local file, line_num, col, severity, message = line:match("([^:]+):(%d+):(%d+): ([^:]+): (.+)")
+            if file and line_num and message then
+              local diagnostic = {
+                lnum = tonumber(line_num) - 1,
+                col = tonumber(col) - 1 or 0,
+                message = message,
+                severity = severity:lower():match("error") and vim.diagnostic.severity.ERROR
+                    or severity:lower():match("warning") and vim.diagnostic.severity.WARN
+                    or vim.diagnostic.severity.INFO,
+                source = "verilator",
+              }
+              table.insert(diagnostics, diagnostic)
+            end
+          end
+          return diagnostics
+        end,
+      }
+
+      -- Helper function to check if a linter command exists
+      local function linter_exists(cmd)
+        return vim.fn.executable(cmd) == 1
+      end
+
+      -- Auto-lint on various events with error handling
+      local lint_augroup = vim.api.nvim_create_augroup("lint", { clear = true })
+      vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
+        group = lint_augroup,
+        callback = function()
+          -- Get the current filetype
+          local ft = vim.bo.filetype
+          local linters = lint.linters_by_ft[ft] or {}
+
+          -- Check if any linters are available for this filetype
+          local available_linters = {}
+          for _, linter_name in ipairs(linters) do
+            local linter_config = lint.linters[linter_name]
+            if linter_config and linter_exists(linter_config.cmd) then
+              table.insert(available_linters, linter_name)
+            end
+          end
+
+          -- Only run linting if we have available linters
+          if #available_linters > 0 then
+            lint.try_lint(available_linters)
+          end
+        end,
+      })
+
+      -- Manual lint command
+      vim.api.nvim_create_user_command("Lint", function()
+        lint.try_lint()
+      end, { desc = "Trigger linting for current file" })
+    end,
+  },
+
+  -- Enhanced text illumination
+  {
+    "RRethy/vim-illuminate",
+    config = function()
+      vim.cmd([[
+        let g:Illuminate_useDeprecated = 1
+        let g:Illuminate_ftwhitelist = ['python, c, php']
+      ]])
+
+      -- Set the highlighting style
+      vim.api.nvim_command([[hi def link LspReferenceText CursorLine]])
+      vim.api.nvim_command([[hi def link LspReferenceWrite CursorLine]])
+      vim.api.nvim_command([[hi def link LspReferenceRead CursorLine]])
+    end,
+  },
+
+  -- Debugging with DAP (Core functionality)
+  {
+    "mfussenegger/nvim-dap",
+    config = function()
+      -- Get the DAP module safely
+      local status_ok, dap = pcall(require, "dap")
+      if not status_ok then
+        vim.notify("nvim-dap not available", vim.log.levels.WARN)
+        return
+      end
+
+      -- Set up key mappings for DAP
+      vim.keymap.set("n", "<Leader>dp", function()
+        dap.continue()
+      end, { desc = "Debug: Continue" })
+
+      vim.keymap.set("n", "<Leader>dn", function()
+        dap.step_over()
+      end, { desc = "Debug: Step over" })
+      vim.keymap.set("n", "<Leader>di", function()
+        dap.step_into()
+      end, { desc = "Debug: Step into" })
+      vim.keymap.set("n", "<Leader>do", function()
+        dap.step_out()
+      end, { desc = "Debug: Step out" })
+
+      vim.keymap.set("n", "<Leader>dd", function()
+        dap.toggle_breakpoint()
+      end, { desc = "Debug: Toggle breakpoint" })
+      vim.keymap.set("n", "<Leader>dD", function()
+        dap.set_breakpoint()
+      end, { desc = "Debug: Set breakpoint" })
+      vim.keymap.set("n", "<Leader>dl", function()
+        dap.set_breakpoint(nil, nil, vim.fn.input("Log point message: "))
+      end, { desc = "Debug: Set log point" })
+
+      vim.keymap.set("n", "<Leader>dr", function()
+        dap.repl.toggle()
+      end, { desc = "Debug: Toggle REPL" })
+
+      vim.keymap.set("n", "<Leader>dl", function()
+        dap.run_last()
+      end, { desc = "Debug: Run last" })
+    end,
+  },
+
+  -- DAP UI - Enhanced debugging UI
+  {
+    "rcarriga/nvim-dap-ui",
+    dependencies = {
+      "mfussenegger/nvim-dap", -- Explicit dependency
+      "nvim-neotest/nvim-nio",
+    },
+    config = function()
+      -- Safely load dapui module
+      local status_ok, dapui = pcall(require, "dapui")
+      if not status_ok then
+        vim.notify("nvim-dap-ui not available", vim.log.levels.WARN)
+        return
+      end
+
+      -- Set up DAPUI
+      dapui.setup({
+        -- Default configuration
+        icons = { expanded = "▾", collapsed = "▸", current_frame = "→" },
+        mappings = {
+          expand = { "<CR>", "<2-LeftMouse>" },
+          open = "o",
+          remove = "d",
+          edit = "e",
+          repl = "r",
+          toggle = "t",
+        },
+        layouts = {
+          {
+            elements = {
+              { id = "scopes", size = 0.25 },
+              "breakpoints",
+              "stacks",
+              "watches",
+            },
+            size = 40,
+            position = "left",
+          },
+          {
+            elements = {
+              "repl",
+              "console",
+            },
+            size = 10,
+            position = "bottom",
+          },
+        },
+        floating = {
+          max_height = nil,
+          max_width = nil,
+          border = "single",
+          mappings = {
+            close = { "q", "<Esc>" },
+          },
+        },
+        windows = { indent = 1 },
+        render = {
+          max_type_length = nil,
+          max_value_lines = 100,
+        },
+      })
+
+      -- Now, safely get DAP for event handling
+      local dap_status, dap = pcall(require, "dap")
+      if dap_status then
+        -- Set up automatic UI open/close with debugging sessions
+        dap.listeners.after.event_initialized["dapui_config"] = function()
+          dapui.open()
+        end
+        dap.listeners.before.event_terminated["dapui_config"] = function()
+          dapui.close()
+        end
+        dap.listeners.before.event_exited["dapui_config"] = function()
+          dapui.close()
+        end
+      end
+
+      -- Additional keymaps for DAP UI
+      vim.keymap.set({ "n", "v" }, "<Leader>dh", function()
+        local widgets_status, widgets = pcall(require, "dap.ui.widgets")
+        if widgets_status then
+          widgets.hover()
+        end
+      end, { desc = "Debug: Hover" })
+
+      vim.keymap.set({ "n", "v" }, "<Leader>dv", function()
+        local widgets_status, widgets = pcall(require, "dap.ui.widgets")
+        if widgets_status then
+          widgets.preview()
+        end
+      end, { desc = "Debug: Preview" })
+
+      vim.keymap.set("n", "<Leader>df", function()
+        local widgets_status, widgets = pcall(require, "dap.ui.widgets")
+        if widgets_status then
+          widgets.centered_float(widgets.frames)
+        end
+      end, { desc = "Debug: Show frames" })
+
+      vim.keymap.set("n", "<Leader>ds", function()
+        local widgets_status, widgets = pcall(require, "dap.ui.widgets")
+        if widgets_status then
+          widgets.centered_float(widgets.scopes)
+        end
+      end, { desc = "Debug: Show scopes" })
+    end,
+  },
+
+  -- DAP Virtual Text - Shows values on top of code while debugging
+  {
+    "theHamsta/nvim-dap-virtual-text",
+    dependencies = {
+      "mfussenegger/nvim-dap",
+      "nvim-treesitter/nvim-treesitter",
+    },
+    config = function()
+      -- Safely load virtual text module
+      local status_ok, virtual_text = pcall(require, "nvim-dap-virtual-text")
+      if not status_ok then
+        vim.notify("nvim-dap-virtual-text not available", vim.log.levels.WARN)
+        return
+      end
+
+      -- Configure virtual text
+      virtual_text.setup({
+        enabled = true,
+        enabled_commands = true,
+        highlight_changed_variables = true,
+        highlight_new_as_changed = false,
+        show_stop_reason = true,
+        commented = false,
+        virt_text_pos = "eol",
+        all_frames = false,
+        virt_lines = false,
+        virt_text_win_col = nil,
+      })
+    end,
+  },
+  -- Custom command to check attached LSPs (since we aren't using nvim-lspconfig)
+  vim.api.nvim_create_user_command("LspStatus", function()
+    local clients = vim.lsp.get_clients({ bufnr = 0 })
+    if #clients == 0 then
+      print("No LSP clients attached to this buffer.")
+      return
+    end
+
+    local names = {}
+    for _, client in ipairs(clients) do
+      table.insert(names, client.name)
+    end
+    print("Attached LSPs: " .. table.concat(names, ", "))
+  end, { desc = "Show attached LSP clients for current buffer" }),
+}
+```
+
+## 📄 ./lua/personal/luasnip-helper-funcs.lua
+
+```lua
+-- ~/.config/nvim/lua/personal/luasnip-helper-funcs.lua
+local ls = require("luasnip")
+
+local M = {}
+
+-- Helper function for working with visual selections
+M.get_visual = function(args, parent)
+    if (#parent.snippet.env.SELECT_RAW > 0) then
+        return ls.snippet_node(nil, {
+            ls.insert_node(1, parent.snippet.env.SELECT_RAW)
+        })
+    else
+        return ls.snippet_node(nil, {
+            ls.insert_node(1, '')
+        })
+    end
+end
+
+-- Get the current date in ISO format
+M.get_ISO_8601_date = function()
+    return os.date("%Y-%m-%d")
+end
+
+-- Get current filename
+M.get_filename = function()
+    return vim.fn.expand("%:t")
+end
+
+-- Get current filepath
+M.get_filepath = function()
+    return vim.fn.expand("%:p")
+end
+
+return M
+```
+
+## 📄 ./lua/plugins/coding.lua
+
+```lua
+-- ~/.config/nvim/lua/plugins/coding.lua
+-- Coding-related plugins
+
+return {
+	-- Completion: nvim-cmp
+	{
+		"hrsh7th/nvim-cmp",
+		dependencies = {
+			"hrsh7th/cmp-nvim-lsp", -- LSP source
+			"hrsh7th/cmp-buffer", -- Buffer source
+			"hrsh7th/cmp-path", -- Path source
+			"hrsh7th/cmp-cmdline", -- Command line source
+			"hrsh7th/cmp-omni", -- Omni completion source
+			"saadparwaiz1/cmp_luasnip", -- Snippet source
+			"L3MON4D3/LuaSnip", -- Snippet engine
+		},
+		config = function()
+			local cmp = require("cmp")
+			local luasnip = require("luasnip")
+
+			cmp.setup({
+				snippet = {
+					expand = function(args)
+						luasnip.lsp_expand(args.body)
+					end,
+				},
+				mapping = cmp.mapping.preset.insert({
+					["<C-b>"] = cmp.mapping.scroll_docs(-4),
+					["<C-f>"] = cmp.mapping.scroll_docs(4),
+					["<C-Space>"] = cmp.mapping.complete(),
+					["<C-e>"] = cmp.mapping.abort(),
+					["<CR>"] = cmp.mapping.confirm({ select = true }),
+					["<C-k>"] = cmp.mapping(function(fallback)
+						if cmp.visible() then
+							cmp.select_next_item()
+						elseif luasnip.expand_or_jumpable() then
+							luasnip.expand_or_jump()
+						else
+							fallback()
+						end
+					end, { "i", "s" }),
+					["<C-j>"] = cmp.mapping(function(fallback)
+						if cmp.visible() then
+							cmp.select_prev_item()
+						elseif luasnip.jumpable(-1) then
+							luasnip.jump(-1)
+						else
+							fallback()
+						end
+					end, { "i", "s" }),
+				}),
+				sources = cmp.config.sources({
+					{ name = "nvim_lsp" },
+					{ name = "luasnip" },
+					{ name = "omni" },
+					{ name = "buffer" },
+					{ name = "path" },
+				}),
+				completion = {
+					autocomplete = false, -- Disable automatic popup globally
+				},
+				experimental = {
+					ghost_text = true,
+				},
+			})
+
+			-- Use buffer source for `/` and `?`
+			cmp.setup.cmdline({ "/", "?" }, {
+				mapping = cmp.mapping.preset.cmdline(),
+				sources = {
+					{ name = "buffer" },
+				},
+			})
+
+			-- Use cmdline & path source for ':'
+			cmp.setup.cmdline(":", {
+				mapping = cmp.mapping.preset.cmdline(),
+				sources = cmp.config.sources({
+					{ name = "path" },
+				}, {
+					{ name = "cmdline" },
+				}),
+			})
+
+			-- Set up a keymap to manually trigger completion
+			vim.keymap.set("i", "<C-Space>", function()
+				if cmp.visible() then
+					cmp.close()
+				else
+					cmp.complete()
+				end
+			end, { silent = true, desc = "Completion: Toggle completion menu" })
+
+			-- Special configuration for SystemVerilog files
+			cmp.setup.filetype("systemverilog", {
+				sources = cmp.config.sources({
+					{ name = "nvim_lsp" },
+					{ name = "luasnip" },
+					{ name = "omni" },
+					{ name = "buffer" },
+					{ name = "path" },
+				}),
+				completion = {
+					autocomplete = { "TextChanged" }, -- Specify events for auto-completion
+				},
+			})
+
+			-- Special configuration for LaTeX files
+			cmp.setup.filetype("tex", {
+				sources = cmp.config.sources({
+					{ name = "nvim_lsp" },
+					{ name = "luasnip" },
+					{ name = "omni" },
+					{ name = "vimtex" },
+					{ name = "buffer" },
+					{ name = "path" },
+				}),
+				completion = {
+					autocomplete = { "TextChanged" }, -- Enable automatic popup for tex files
+				},
+			})
+		end,
+	},
+
+	-- Snippets: LuaSnip
+	{
+		"L3MON4D3/LuaSnip",
+		version = "v2.*",
+		build = "make install_jsregexp",
+		dependencies = {
+			"rafamadriz/friendly-snippets", -- Collection of snippets
+		},
+		config = function()
+			local ls = require("luasnip")
+
+			ls.config.set_config({
+				history = false, -- Don't store snippet history for less overhead
+				enable_autosnippets = true, -- Allow autotrigger snippets
+				store_selection_keys = "<Tab>", -- Use Tab for visual selection (original functionality)
+				region_check_events = "InsertEnter", -- Event on which to check for exiting a snippet's region
+				delete_check_events = "InsertLeave",
+			})
+
+			-- Load friendly-snippets
+			require("luasnip.loaders.from_vscode").lazy_load()
+
+			-- Load custom snippets
+			require("luasnip.loaders.from_lua").lazy_load({ paths = vim.fn.stdpath("config") .. "/snippets/" })
+
+			-- Keymaps for snippet navigation using Lua (more reliable)
+			local luasnip = require("luasnip")
+
+			-- Jump forward with jk (works with snippets and brackets/quotes)
+			vim.keymap.set({ "i", "s" }, "jk", function()
+				if luasnip.jumpable(1) then
+					luasnip.jump(1)
+				else
+					-- Check if we're inside brackets/quotes and can jump out
+					local line = vim.api.nvim_get_current_line()
+					local col = vim.api.nvim_win_get_cursor(0)[2]
+					local char_after = line:sub(col + 1, col + 1)
+
+					-- If next character is a closing bracket/quote, jump over it
+					if char_after:match("[%)%]%}\"'`]") then
+						vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Right>", true, false, true), "n", false)
+					else
+						-- Otherwise just insert "jk"
+						vim.api.nvim_feedkeys("jk", "n", false)
+					end
+				end
+			end, { silent = true, desc = "LuaSnip: Jump forward in snippets or exit brackets/quotes" })
+
+			-- Jump backward with jh (works with snippets and brackets/quotes)
+			vim.keymap.set({ "i", "s" }, "jh", function()
+				if luasnip.jumpable(-1) then
+					luasnip.jump(-1)
+				else
+					-- Check if we're outside brackets/quotes and can jump back in
+					local line = vim.api.nvim_get_current_line()
+					local col = vim.api.nvim_win_get_cursor(0)[2]
+					local char_before = line:sub(col, col)
+					local char_before_that = line:sub(col - 1, col - 1)
+
+					-- If current character is a closing bracket/quote, jump back inside
+					if char_before:match("[%)%]%}\"'`]") then
+						vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Left>", true, false, true), "n", false)
+					-- If we're right after a pair of brackets/quotes, jump inside
+					elseif char_before_that:match("[%(%[%{\"'`]") and char_before:match("[%)%]%}\"'`]") then
+						vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Left>", true, false, true), "n", false)
+					else
+						-- Otherwise just insert "jh"
+						vim.api.nvim_feedkeys("jh", "n", false)
+					end
+				end
+			end, { silent = true, desc = "LuaSnip: Jump backward in snippets or enter brackets/quotes" })
+
+			-- Cycle through choice nodes with Control-F
+			vim.keymap.set({ "i", "s" }, "<C-f>", function()
+				if luasnip.choice_active() then
+					luasnip.change_choice(1)
+				else
+					-- If no choice active, scroll docs (cmp behavior)
+					vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-f>", true, false, true), "n", false)
+				end
+			end, { silent = true, desc = "LuaSnip: Next choice or scroll docs" })
+
+			-- Command to refresh snippets
+			vim.keymap.set(
+				"",
+				"<Leader>U",
+				'<Cmd>lua require("luasnip.loaders.from_lua").lazy_load({paths = "'
+					.. vim.fn.stdpath("config")
+					.. '/snippets/"})<CR><Cmd>echo "Snippets refreshed!"<CR>',
+				{ desc = "Refresh snippets" }
+			)
+		end,
+	},
+
+	-- Syntax support for SystemVerilog
+	{
+		"vhda/verilog_systemverilog.vim",
+		ft = { "verilog", "systemverilog" },
+		config = function()
+			vim.g.verilog_syntax_fold_lst = "block,function,task,specify,module,class,covergroup"
+			vim.g.verilog_disable_indent_lst = "eos"
+			vim.g.verilog_indent_modules = 1
+			vim.g.verilog_indent_width = 2
+		end,
+	},
+
+	-- In lua/plugins/coding.lua
+	{
+		"luk400/vim-jukit",
+		lazy = true, -- Don't lazy load this plugin
+		priority = 1000, -- Highest priority to load very early
+		init = function() -- Execute before plugin loads
+			-- Force the correct syntax file path
+			vim.g.jukit_text_syntax_file = vim.fn.expand("$VIMRUNTIME/syntax/markdown.vim")
+
+			-- Check if file exists and use fallback if needed
+			if vim.fn.filereadable(vim.g.jukit_text_syntax_file) ~= 1 then
+				vim.g.jukit_text_syntax_file = vim.fn.expand("$VIMRUNTIME/syntax/text.vim")
+			end
+
+			-- Other vim-jukit settings
+			vim.g.python3_host_prog = "/usr/bin/python3"
+			vim.g.jukit_shell_cmd = "ipython3"
+			vim.g.jukit_terminal = "nvimterm"
+			vim.g.jukit_auto_output_hist = 1
+			vim.g.jukit_use_tcomment = 1
+			vim.g.jukit_enable_textcell_bg = 0 -- Try disabling this feature
+
+			-- Print path for debugging
+			-- vim.api.nvim_create_autocmd("VimEnter", {
+			--   callback = function()
+			--     vim.notify("vim-jukit using syntax file: " .. vim.g.jukit_text_syntax_file)
+			--   end,
+			--   once = true
+			-- })
+		end,
+	},
+	-- Clipboard image saver
+	{
+		"postfen/clipboard-image.nvim",
+		config = function()
+			require("clipboard-image").setup({
+				default = {
+					img_dir = vim.fn.expand("~/Pictures/clipboard_images"),
+					img_dir_txt = vim.fn.expand("~/Pictures/clipboard_images"),
+					img_name = function()
+						return "screenshot_" .. os.date("%Y%m%d%H%M%S") .. "_" .. math.random(1000)
+					end,
+					affix = "![clipboard_image](%s)",
+				},
+			})
+		end,
+	},
+
+	-- Live preview for Markdown, HTML, AsciiDoc, SVG
+	{
+		"brianhuster/live-preview.nvim",
+		cmd = { "LivePreview", "LivePreviewStop", "LivePreviewToggle" },
+		config = function()
+			require("livepreview").setup({
+				-- Port for the preview server
+				port = 5501,
+				-- Auto-open browser when starting preview
+				browser = "default",
+				-- Dynamic title based on file name
+				dynamic_title = true,
+				-- Sync scrolling
+				sync_scroll = true,
+				-- File types to enable live preview
+				file_types = { "markdown", "html", "asciidoc", "svg" },
+			})
+
+			-- Auto-close preview when buffer is closed
+			vim.api.nvim_create_autocmd("BufUnload", {
+				pattern = { "*.md", "*.html", "*.adoc", "*.svg" },
+				callback = function()
+					pcall(vim.cmd, "LivePreviewStop")
+				end,
+			})
+
+			-- Monkey-patch Server:stop to prevent "attempt to index field 'server' (a nil value)" error
+			-- This error happens when the server object is in an inconsistent state during shutdown
+			local server = require("livepreview.server")
+			local original_stop = server.Server.stop
+
+			server.Server.stop = function(self, callback)
+				if self.server then
+					-- Safely close with error handling
+					local safe_close = function()
+						self.server = nil
+						if callback then
+							callback()
+						end
+					end
+
+					local ok, _ = pcall(function()
+						self.server:close(safe_close)
+					end)
+
+					if not ok then
+						self.server = nil
+						if callback then
+							callback()
+						end
+					end
+				else
+					if callback then
+						callback()
+					end
+				end
+
+				if self._watcher then
+					pcall(function()
+						self._watcher:close()
+					end)
+				end
+				self._watcher = nil
+				vim.api.nvim_del_augroup_by_name("LivePreview")
+			end
+		end,
+	},
+
+	-- Markdown support
+	{
+		"preservim/vim-markdown",
+		dependencies = { "godlygeek/tabular" },
+		ft = { "markdown" },
+		init = function()
+			vim.g.vim_markdown_folding_disabled = 1
+			vim.g.vim_markdown_conceal = 2
+			vim.g.vim_markdown_conceal_code_blocks = 0
+			vim.g.vim_markdown_math = 1
+			vim.g.vim_markdown_frontmatter = 1
+			vim.g.vim_markdown_strikethrough = 1
+		end,
+	},
+
+	-- Additional coding tools
+	{
+		"jakemason/ouroboros", -- File navigation
+	},
+
+	-- FZF
+	{
+		"junegunn/fzf",
+		build = function()
+			vim.fn["fzf#install"]()
+		end,
+	},
+
+	{
+		"ibhagwan/fzf-lua",
+		dependencies = { "nvim-tree/nvim-web-devicons" },
+	},
+	-- Avante
+	{
+		"yetone/avante.nvim",
+		event = "VeryLazy",
+		version = false, -- Never set this value to "*"! Never!
+		debug = true,
+		opts = {
+			-- add any opts here
+			-- for example
+			instructions_file = "avante.md",
+			provider = "xai", -- Changed from copilot to igpt since copilot is disabled
+			auto_suggestions_provider = "xai", -- Changed from copilot to igpt
+			-- RAG Service Configuration
+			rag_service = {
+				enabled = false, -- Enable RAG service
+				host_mount = os.getenv("HOME"), -- Mount home directory for file access
+				-- host_mount = vim.fn.expand("~/RAG"), -- Mount RAG directory for file access
+				runner = "docker", -- Use Docker to run RAG service
+				-- LLM configuration for RAG service (for generating responses based on retrieved context)
+
+				llm = {
+					__inherited_from = "openai",
+					endpoint = "https://api.x.ai/v1",
+					model = "grok-4",
+					model_names = { "grok-4", "grok-3", "grok-3-mini" },
+					api_key_name = "XAI_API_KEY",
+					timeout = 50000,
+					cache = true,
+					extra_request_body = {
+						temperature = 0,
+						max_completion_tokens = 16384,
+						reasoning_effort = "high",
+					},
+				},
+				-- Embedding configuration for RAG service (for document indexing and similarity search)
+				embed = {
+					provider = "openai",
+					-- Use localhost since we're using --network=host
+					endpoint = "https://api.openai.com/v1", -- Your igpt endpoint accessible from Docker
+					api_key = "OPENAI_API_KEY", -- Same API key
+					model = "text-embedding-3-large", -- Embedding model (adjust if your endpoint uses different model names)
+					-- Option 2: Uncomment below to use OpenAI for embeddings instead
+					-- endpoint = "https://api.openai.com/v1",
+					-- api_key = "OPENAI_API_KEY",
+					-- model = "text-embedding-3-large",
+					extra = {
+						-- Add any extra parameters for embedding requests
+					},
+				},
+				docker_extra_args = "--network=host", -- Additional Docker arguments if needed
+			},
+			providers = {
+				ollama = {
+					endpoint = "http://127.0.0.1:11434", -- Note that there is no /v1 at the end.
+					model = "minimax-m2:cloud",
+				},
+				-- Explicitly disable copilot provider to prevent SSL errors
+				copilot = {
+					enabled = true, -- Disable copilot provider
+					-- list_models = function()
+					-- 	return {}
+					-- end, -- Return empty model list
+					-- parse_response = function()
+					-- 	return ""
+					-- end, -- Dummy response parser
+					-- parse_stream_data = function()
+					-- 	return ""
+					-- end, -- Dummy stream parser
+				},
+				claude = {
+					model = "claude-sonnet-4-5-20250929",
+
+					-- thinking = {
+					--   type = "enabled";
+					--   budget_tokens = 2048;
+					-- }
+				},
+				openai = {
+					endpoint = "https://api.openai.com/v1",
+					model = "gpt-4o", -- your desired model (or use gpt-4o, etc.)
+					timeout = 30000, -- Timeout in milliseconds, increase this for reasoning models
+					extra_request_body = {
+						temperature = 0,
+						max_completion_tokens = 8192, -- Increase this to include reasoning tokens (for reasoning models)
+						reasoning_effort = "medium", -- low|medium|high, only used for reasoning models
+					},
+				},
+				xai = {
+					__inherited_from = "openai",
+					endpoint = "https://api.x.ai/v1",
+					model = "grok-4-fast-reasoning",
+					model_names = {
+						"grok-code-fast-1",
+						"grok-4-fast-reasoning",
+						"grok-4-fast-non-reasoning",
+						"grok-4-0709",
+						"grok-3-mini",
+						"grok-3",
+						"grok-2-vision-1212",
+						"grok-2-image-1212",
+					},
+					api_key_name = "XAI_API_KEY",
+					timeout = 50000,
+					cache = true,
+					extra_request_body = {
+						temperature = 0,
+						max_completion_tokens = 16384,
+						reasoning_effort = "high",
+					},
+				},
+				gemini_beta = {
+					__inherited_from = "gemini",
+					-- endpoint = "https://generativelanguage.googleapis.com/v1beta/openai",
+					model = "gemini-3-pro",
+					model_names = { "gemini-3-pro", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite" },
+					api_key_name = "GEMINI_API_KEY",
+					-- timeout = 50000,
+					-- extra_request_body = {
+					--   reasoning_effort = "high",
+					-- },
+				},
+				deepseek = {
+					__inherited_from = "openai",
+					endpoint = "https://api.deepseek.com",
+					model = "deepseek-coder",
+					model_names = { "deepseek-coder", "deepseek-reasoner" },
+					api_key_name = "DEEPSEEK_API_KEY",
+					cache = true,
+					timeout = 50000,
+					extra_request_body = {
+						temperature = 0.5,
+						max_completion_tokens = 10000,
+						reasoning_effort = "medium",
+					},
+				},
+			},
+			-- MCPHub integration
+			system_prompt = function()
+				local hub = require("mcphub").get_hub_instance()
+				return hub:get_active_servers_prompt()
+			end,
+			custom_tools = function()
+				return {
+					require("mcphub.extensions.avante").mcp_tool(),
+				}
+			end,
+		},
+		-- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
+		build = "make",
+		-- build = "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false" -- for windows
+		dependencies = {
+			"nvim-treesitter/nvim-treesitter",
+			"stevearc/dressing.nvim",
+			"nvim-lua/plenary.nvim",
+			"MunifTanjim/nui.nvim",
+			--- The below dependencies are optional,
+			"echasnovski/mini.pick", -- for file_selector provider mini.pick
+			"nvim-telescope/telescope.nvim", -- for file_selector provider telescope
+			"hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
+			"ibhagwan/fzf-lua", -- for file_selector provider fzf
+			"nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
+			-- GitHub Copilot - DISABLED due to company restrictions
+			-- {
+			-- 	"zbirenbaum/copilot.lua",
+			-- 	cmd = "Copilot",
+			-- 	event = "InsertEnter",
+			-- 	config = function()
+			-- 		require("copilot").setup({
+			-- 			panel = {
+			-- 				enabled = true,
+			-- 				auto_refresh = true,
+			-- 				keymap = {
+			-- 					jump_prev = "[[",
+			-- 					jump_next = "]]",
+			-- 					accept = "<CR>",
+			-- 					refresh = "gr",
+			-- 					open = "<M-CR>",
+			-- 				},
+			-- 				layout = {
+			-- 					position = "bottom", -- | top | left | right
+			-- 					ratio = 0.4,
+			-- 				},
+			-- 			},
+			-- 			suggestion = {
+			-- 				enabled = false,
+			-- 				auto_trigger = true,
+			-- 				debounce = 75,
+			-- 				keymap = {
+			-- 					accept = "<M-l>",
+			-- 					accept_word = "<M-w>",
+			-- 					accept_line = "<M-j>",
+			-- 					next = "<M-]>",
+			-- 					prev = "<M-[>",
+			-- 					dismiss = "<C-]>",
+			-- 				},
+			-- 			},
+			-- 			filetypes = {
+			-- 				markdown = true,
+			-- 				help = false,
+			-- 				gitcommit = false,
+			-- 				gitrebase = false,
+			-- 				["."] = false,
+			-- 			},
+			-- 			copilot_node_command = "node", -- Node.js version must be > 18
+			-- 			server_opts_overrides = {
+			-- 				trace = "verbose",
+			-- 				settings = {
+			-- 					advanced = {
+			-- 						listCount = 10, -- #completions for panel
+			-- 						inlineSuggestCount = 3, -- #completions for getCompletions
+			-- 					},
+			-- 				},
+			-- 			},
+			-- 		})
+			-- 	end,
+			-- },
+			{
+				-- support for image pasting
+				"HakonHarnes/img-clip.nvim",
+				event = "VeryLazy", -- next can try "InsertEnter" or "BufReadPost"""
+				opts = {
+					-- recommended settings
+					default = {
+						embed_image_as_base64 = false,
+						prompt_for_file_name = false,
+						drag_and_drop = {
+							insert_mode = true,
+						},
+						-- required for Windows users
+						use_absolute_path = true,
+					},
+				},
+			},
+			{
+				-- Make sure to set this up properly if you have lazy=true
+				"MeanderingProgrammer/render-markdown.nvim",
+				opts = {
+					file_types = { "markdown", "Avante" },
+					latex = { enabled = true },
+				},
+				ft = { "markdown", "Avante" },
+			},
+			{
+				"ravitemer/mcphub.nvim",
+				dependencies = {
+					"nvim-lua/plenary.nvim", -- Required for Job and HTTP requests
+				},
+				build = "npm install -g mcp-hub@latest", -- Installs required mcp-hub npm module
+				event = "VeryLazy", -- Ensure it loads before avante.nvim
+				config = function()
+					require("mcphub").setup({
+						-- Required options
+						port = 3000, -- Port for MCP Hub server
+						config = vim.fn.expand("~/mcpservers.json"), -- Absolute path to config file
+
+						-- -- Optional options
+						-- on_ready = function(hub)
+						--   -- Called when hub is ready
+						--   vim.notify("MCPHub is ready!", vim.log.levels.INFO)
+						-- end,
+						-- on_error = function(err)
+						--   -- Called on errors
+						--   vim.notify("MCPHub error: " .. err, vim.log.levels.ERROR)
+						-- end,
+						-- log = {
+						--   level = vim.log.levels.WARN,
+						--   to_file = true,
+						--   file_path = vim.fn.expand("~/mcphub.log"),
+						--   prefix = "MCPHub"
+						-- },
+					})
+				end,
+			},
+		},
+	},
+	{
+		"NickvanDyke/opencode.nvim",
+		dependencies = {
+			--Recommended for better prompt input, and required to use opencode.nvim's embedded terminal - otherwise optional
+			{ "folke/snacks.nvim", opts = { input = { enabled = true } } },
+		},
+		---@type opencode.Opts
+		opts = {
+			-- Your configuration, if any - see lua/opencode/config.lua
+		},
+		keys = {
+			-- Recommended keymaps
+			{
+				"<leader>oA",
+				function()
+					require("opencode").ask()
+				end,
+				desc = "Ask opencode",
+			},
+			{
+				"<leader>oa",
+				function()
+					require("opencode").ask("@cursor: ")
+				end,
+				desc = "Ask opencode about this",
+				mode = "n",
+			},
+			{
+				"<leader>oa",
+				function()
+					require("opencode").ask("@selection: ")
+				end,
+				desc = "Ask opencode about selection",
+				mode = "v",
+			},
+			{
+				"<leader>ot",
+				function()
+					require("opencode").toggle()
+				end,
+				desc = "Toggle embedded opencode",
+			},
+			{
+				"<leader>on",
+				function()
+					require("opencode").command("session_new")
+				end,
+				desc = "New session",
+			},
+			{
+				"<leader>oy",
+				function()
+					require("opencode").command("messages_copy")
+				end,
+				desc = "Copy last message",
+			},
+			{
+				"<S-C-u>",
+				function()
+					require("opencode").command("messages_half_page_up")
+				end,
+				desc = "Scroll messages up",
+			},
+			{
+				"<S-C-d>",
+				function()
+					require("opencode").command("messages_half_page_down")
+				end,
+				desc = "Scroll messages down",
+			},
+			{
+				"<leader>op",
+				function()
+					require("opencode").select_prompt()
+				end,
+				desc = "Select prompt",
+				mode = { "n", "v" },
+			},
+			-- Example: keymap for custom prompt
+			{
+				"<leader>oe",
+				function()
+					require("opencode").prompt("Explain @cursor and its context")
+				end,
+				desc = "Explain code near cursor",
+			},
+		},
+	},
+
+	-- LeetCode plugin
+	{
+		"kawre/leetcode.nvim",
+		build = ":TSUpdate html", -- Ensure HTML treesitter is installed
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+			"MunifTanjim/nui.nvim",
+			"nvim-telescope/telescope.nvim", -- for picker
+			"nvim-treesitter/nvim-treesitter",
+		},
+		opts = {
+			-- Use argument-based startup
+			arg = "leetcode.nvim",
+
+			-- Default language
+			lang = "python",
+
+			-- Storage configuration
+			storage = {
+				home = vim.fn.stdpath("data") .. "/leetcode",
+				cache = vim.fn.stdpath("cache") .. "/leetcode",
+			},
+
+			-- Console configuration
+			console = {
+				open_on_runcode = true,
+				dir = "row",
+				size = {
+					width = "90%",
+					height = "75%",
+				},
+				result = {
+					size = "60%",
+				},
+				testcase = {
+					virt_text = true,
+					size = "40%",
+				},
+			},
+
+			-- Description panel configuration
+			description = {
+				position = "left",
+				width = "40%",
+				show_stats = true,
+			},
+
+			-- Use telescope as picker
+			picker = {
+				provider = "telescope",
+			},
+
+			-- Code injection for different languages
+			injector = {
+				["cpp"] = {
+					imports = function()
+						return { "#include <bits/stdc++.h>", "using namespace std;" }
+					end,
+				},
+				["python3"] = {
+					imports = function(default_imports)
+						vim.list_extend(default_imports, { "from typing import *" })
+						return default_imports
+					end,
+				},
+				["c"] = {
+					imports = function()
+						return { "#include <stdio.h>", "#include <stdlib.h>", "#include <string.h>" }
+					end,
+				},
+			},
+
+			-- Editor settings
+			editor = {
+				reset_previous_code = true,
+				fold_imports = true,
+			},
+
+			-- Enable logging for debugging
+			logging = true,
+
+			-- Cache settings
+			cache = {
+				update_interval = 60 * 60 * 24 * 7, -- 7 days
+			},
+
+			-- Authentication domain (use leetcode.com by default)
+			domain = "com", -- or "cn" for leetcode.cn
+
+			-- Hooks for better integration
+			hooks = {
+				["enter"] = {
+					function()
+						-- Ensure LeetCode commands are available
+						local leetcode = require("leetcode")
+						if leetcode.setup_cmds then
+							leetcode.setup_cmds()
+						end
+					end,
+				},
+			},
+		},
+		cmd = "Leet", -- Lazy load on command
+		config = function(_, opts)
+			require("leetcode").setup(opts)
+
+			-- Ensure commands are set up after plugin loads
+			vim.defer_fn(function()
+				local ok, leetcode = pcall(require, "leetcode")
+				if ok and leetcode.setup_cmds then
+					leetcode.setup_cmds()
+				end
+			end, 100)
+		end,
+	},
+}
+```
+
+## 📄 ./lua/personal/beamer.lua
+
+```lua
+-- ~/.config/nvim/lua/personal/beamer.lua
+-- Beamer folding system for LaTeX presentations
+
+local M = {}
+
+-- Function to determine fold level for beamer frames
+local function beamer_fold(lnum)
+  local line = vim.fn.getline(lnum)
+
+  if line:match("\\begin{frame}") then
+    return ">1"  -- Start a fold at level 1
+  elseif line:match("\\end{frame}") then
+    return "<1"  -- End a fold at level 1
+  else
+    return "="   -- Keep current fold level
+  end
+end
+
+-- Function to set up folding for the current buffer
+local function setup_folding()
+  vim.wo.foldmethod = "expr"
+  vim.wo.foldexpr = "v:lua.require'personal.beamer'.fold(v:lnum)"
+  vim.wo.foldlevel = 0  -- Close all folds by default
+  vim.cmd("normal! zx")  -- Refresh folds
+end
+
+-- Expose the fold function for use in foldexpr
+function M.fold(lnum)
+  return beamer_fold(lnum)
+end
+
+-- Setup function
+function M.setup()
+  -- Create command to manually activate beamer folding
+  vim.api.nvim_create_user_command("BeamerFold", function()
+    setup_folding()
+  end, {})
+
+  -- Auto-setup for TeX files
+  vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
+    pattern = "*.tex",
+    callback = function()
+      -- Check if this is a beamer document
+      local content = vim.api.nvim_buf_get_lines(0, 0, 50, false)
+      local is_beamer = false
+
+      for _, line in ipairs(content) do
+        if line:match("\\documentclass%s*%[?%s*beamer%s*%]?") or line:match("\\begin{frame}") then
+          is_beamer = true
+          break
+        end
+      end
+
+      if is_beamer then
+        setup_folding()
+      end
+    end
+  })
+
+  -- Map a key to toggle all folds in a beamer document
+  vim.keymap.set('n', '<leader>bf', ':BeamerFold<CR>zM',
+    {noremap = true, silent = true, desc = "Set up beamer folding and close all folds"})
+
+  -- Map a key to open all folds
+  vim.keymap.set('n', '<leader>bo', 'zR',
+    {noremap = true, silent = true, desc = "Open all folds"})
+
+  -- Map a key to close all folds
+  vim.keymap.set('n', '<leader>bc', 'zM',
+    {noremap = true, silent = true, desc = "Close all folds"})
+end
+
+-- Return the module
+return M
+```
+
+## 📄 ./lua/personal/concat.lua
+
+```lua
+-- ~/.config/nvim/lua/personal/concat.lua
+local M = {}
+
+-- Check if telescope is available
+local function has_telescope()
+	return pcall(require, "telescope")
+end
+
+-- Check if nvim-tree is available
+local function has_nvim_tree()
+	return pcall(require, "nvim-tree")
+end
+
+-- State management
+local selected_files = {}
+local config = {
+	output_file = "concatenated.txt",
+	max_size = nil,
+	exclude_patterns = { ".git", "node_modules", ".DS_Store" },
+}
+
+-- Namespace for our custom highlights
+local ns_id = vim.api.nvim_create_namespace("concat_files_selection")
+
+-- Enhanced Telescope file picker with proper multi-select
+local function telescope_file_picker()
+	if not has_telescope() then
+		vim.notify("Telescope not found, falling back to alternative method", vim.log.levels.WARN)
+		return M.fallback_picker()
+	end
+
+	local pickers = require("telescope.pickers")
+	local finders = require("telescope.finders")
+	local conf = require("telescope.config").values
+	local actions = require("telescope.actions")
+	local action_state = require("telescope.actions.state")
+	local previewers = require("telescope.previewers")
+
+	-- Get files
+	local files = {}
+	local handle = io.popen("find . -type f ! -path '*/.*' ! -path '*/node_modules/*' ! -path '*/.git/*' | sort")
+	if handle then
+		for line in handle:lines() do
+			table.insert(files, line)
+		end
+		handle:close()
+	end
+
+	-- Create a function to make the finder (so we can refresh it)
+	local function make_finder()
+		return finders.new_table({
+			results = files,
+			entry_maker = function(entry)
+				local display_name
+				-- Check selection status and update display
+				if selected_files[entry] then
+					display_name = "✅ " .. entry
+				else
+					display_name = "⬜ " .. entry
+				end
+
+				return {
+					value = entry,
+					display = display_name,
+					ordinal = entry,
+					path = entry,
+				}
+			end,
+		})
+	end
+
+	-- Custom previewer that shows file info + selection status
+	local custom_previewer = previewers.new_buffer_previewer({
+		title = "File Preview & Selection Info",
+		define_preview = function(self, entry, status)
+			local file_path = entry.value
+			local bufnr = self.state.bufnr
+
+			-- File info
+			local file_info = {}
+			local stat = vim.loop.fs_stat(file_path)
+			if stat then
+				table.insert(file_info, "📁 File: " .. file_path)
+				table.insert(file_info, "📏 Size: " .. stat.size .. " bytes")
+				table.insert(file_info, "📅 Modified: " .. os.date("%Y-%m-%d %H:%M:%S", stat.mtime.sec))
+				table.insert(file_info, "")
+
+				-- Selection status
+				if selected_files[file_path] then
+					table.insert(file_info, "✅ SELECTED for concatenation")
+				else
+					table.insert(file_info, "⬜ Not selected (press <Tab> to select)")
+				end
+				table.insert(file_info, "")
+
+				-- Current selection summary
+				local selected_count = vim.tbl_count(selected_files)
+				table.insert(file_info, "📊 Selection Summary:")
+				table.insert(file_info, "   Selected files: " .. selected_count)
+				if selected_count > 0 then
+					table.insert(file_info, "   Selected files list:")
+					local selected_list = vim.tbl_keys(selected_files)
+					table.sort(selected_list)
+					for i, selected_file in ipairs(selected_list) do
+						if i <= 10 then -- Show max 10 files
+							table.insert(file_info, "     " .. i .. ". " .. selected_file)
+						elseif i == 11 then
+							table.insert(file_info, "     ... and " .. (selected_count - 10) .. " more")
+							break
+						end
+					end
+				end
+				table.insert(file_info, "")
+				table.insert(file_info, "🔧 Controls:")
+				table.insert(file_info, "   <Tab>    - Toggle selection")
+				table.insert(file_info, "   <C-a>    - Select all files")
+				table.insert(file_info, "   <C-d>    - Deselect all files")
+				table.insert(file_info, "   <C-o>    - Go to options menu")
+				table.insert(file_info, "   <Enter>  - Go to options menu")
+				table.insert(file_info, "   <Esc>    - Cancel")
+				table.insert(file_info, "")
+				table.insert(file_info, string.rep("─", 50))
+				table.insert(file_info, "")
+			end
+
+			-- Add file content preview
+			local file_content = {}
+			local f = io.open(file_path, "r")
+			if f then
+				local line_count = 0
+				for line in f:lines() do
+					table.insert(file_content, line)
+					line_count = line_count + 1
+					if line_count >= 30 then -- Limit preview lines
+						table.insert(file_content, "... (truncated, showing first 30 lines)")
+						break
+					end
+				end
+				f:close()
+			else
+				table.insert(file_content, "❌ Cannot read file")
+			end
+
+			-- Combine info and content
+			local all_lines = {}
+			vim.list_extend(all_lines, file_info)
+			vim.list_extend(all_lines, file_content)
+
+			vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, all_lines)
+
+			-- Set syntax highlighting for the preview
+			vim.api.nvim_buf_set_option(bufnr, "filetype", "markdown")
+		end,
+	})
+
+	-- Function to refresh picker with updated selection count
+	local function refresh_picker(picker)
+		local new_finder = make_finder()
+		picker:refresh(new_finder, { reset_prompt = false })
+
+		-- Update the prompt title to show current selection count
+		local selected_count = vim.tbl_count(selected_files)
+		picker.prompt_border:change_title(string.format("📁 File Concatenation (Selected: %d)", selected_count))
+	end
+
+	local picker = pickers.new({}, {
+		prompt_title = string.format("📁 File Concatenation (Selected: %d)", vim.tbl_count(selected_files)),
+		finder = make_finder(),
+		sorter = conf.generic_sorter({}),
+		previewer = custom_previewer,
+		attach_mappings = function(prompt_bufnr, map)
+			-- Toggle selection with Tab
+			local function toggle_selection()
+				local selection = action_state.get_selected_entry()
+				if selection then
+					local file_path = selection.value
+					if selected_files[file_path] then
+						selected_files[file_path] = nil
+						vim.notify("❌ Removed: " .. vim.fn.fnamemodify(file_path, ":."), vim.log.levels.INFO)
+					else
+						selected_files[file_path] = true
+						vim.notify("✅ Added: " .. vim.fn.fnamemodify(file_path, ":."), vim.log.levels.INFO)
+					end
+
+					-- Refresh the picker to update display
+					local current_picker = action_state.get_current_picker(prompt_bufnr)
+					refresh_picker(current_picker)
+				end
+			end
+
+			map("i", "<Tab>", toggle_selection)
+			map("n", "<Tab>", toggle_selection)
+
+			-- Select all files with Ctrl+A
+			local function select_all()
+				local count_before = vim.tbl_count(selected_files)
+
+				-- FIX: Check if file exists before selecting
+				for _, file in ipairs(files) do
+					-- vim.fn.filereadable returns 1 if file exists and is readable
+					if vim.fn.filereadable(file) == 1 then
+						selected_files[file] = true
+					end
+				end
+
+				local count_after = vim.tbl_count(selected_files)
+
+				-- Calculate actual new files (ignoring deleted ones that might have been in the list)
+				local added_count = count_after - count_before
+
+				vim.notify(
+					"✅ Selected " .. count_after .. " valid files (+" .. added_count .. " new)",
+					vim.log.levels.INFO
+				)
+
+				-- Refresh the picker
+				local current_picker = action_state.get_current_picker(prompt_bufnr)
+				refresh_picker(current_picker)
+			end
+
+			map("i", "<C-a>", select_all)
+			map("n", "<C-a>", select_all)
+
+			-- Deselect all files with Ctrl+D
+			local function deselect_all()
+				local count = vim.tbl_count(selected_files)
+				selected_files = {}
+				vim.notify("❌ Deselected all files (" .. count .. " files)", vim.log.levels.INFO)
+
+				-- Refresh the picker
+				local current_picker = action_state.get_current_picker(prompt_bufnr)
+				refresh_picker(current_picker)
+			end
+
+			map("i", "<C-d>", deselect_all)
+			map("n", "<C-d>", deselect_all)
+
+			-- Go to options with Ctrl+O
+			local function go_to_options()
+				actions.close(prompt_bufnr)
+				M.show_options_menu()
+			end
+
+			map("i", "<C-o>", go_to_options)
+			map("n", "<C-o>", go_to_options)
+
+			-- Override Enter to go to options instead of selecting
+			actions.select_default:replace(go_to_options)
+
+			-- Add help mapping
+			map("i", "<C-h>", function()
+				vim.notify(
+					[[
+🔧 Telescope File Concatenation Controls:
+  <Tab>    - Toggle file selection
+  <C-a>    - Select all files
+  <C-d>    - Deselect all files
+  <C-o>    - Go to options menu
+  <Enter>  - Go to options menu
+  <C-h>    - Show this help
+  <Esc>    - Cancel and exit
+]],
+					vim.log.levels.INFO
+				)
+			end)
+
+			map("n", "?", function()
+				vim.notify(
+					[[
+🔧 Telescope File Concatenation Controls:
+  <Tab>    - Toggle file selection
+  <C-a>    - Select all files
+  <C-d>    - Deselect all files
+  <C-o>    - Go to options menu
+  <Enter>  - Go to options menu
+  ?        - Show this help
+  <Esc>    - Cancel and exit
+]],
+					vim.log.levels.INFO
+				)
+			end)
+
+			return true
+		end,
+	})
+
+	picker:find()
+end
+
+-- ==============================================================================
+-- UNIVERSAL HIGHLIGHTING LOGIC (Version Proof)
+-- ==============================================================================
+
+local function highlight_selected_files()
+	-- 1. Safety Checks
+	local status_api, api = pcall(require, "nvim-tree.api")
+	if not status_api then
+		return
+	end
+
+	local status_view, view = pcall(require, "nvim-tree.view")
+	if not status_view or not view.is_visible() then
+		return
+	end
+
+	local bufnr = view.get_bufnr()
+	if not bufnr or not vim.api.nvim_buf_is_valid(bufnr) then
+		return
+	end
+
+	-- 2. Prevent infinite recursion (since we move cursor)
+	if M.is_highlighting then
+		return
+	end
+	M.is_highlighting = true
+
+	-- 3. Setup Context
+	local winid = view.get_winnr and view.get_winnr() or vim.fn.bufwinid(bufnr)
+	local original_cursor = vim.api.nvim_win_get_cursor(winid)
+	local line_count = vim.api.nvim_buf_line_count(bufnr)
+	local cwd = vim.fn.getcwd()
+
+	-- 4. Clear old highlights
+	vim.api.nvim_buf_clear_namespace(bufnr, ns_id, 0, -1)
+
+	-- 5. Scan the Tree
+	-- We wrap in pcall to ensure we ALWAYS restore the cursor/state
+	pcall(function()
+		-- Suppress events to prevent flickering and recursion
+		local old_ei = vim.o.eventignore
+		vim.o.eventignore = "all"
+
+		for i = 1, line_count do
+			-- A. Move cursor to the line
+			vim.api.nvim_win_set_cursor(winid, { i, 0 })
+
+			-- B. Ask the public API: "What is here?"
+			local node = api.tree.get_node_under_cursor()
+
+			-- C. Check if valid file
+			if node and node.absolute_path and node.type == "file" then
+				local check_path = node.absolute_path
+
+				-- D. Check against selection (Absolute)
+				local is_selected = selected_files[check_path]
+
+				-- E. Check against selection (Relative)
+				if not is_selected and check_path:sub(1, #cwd) == cwd then
+					local rel_path = "." .. check_path:sub(#cwd + 1)
+					is_selected = selected_files[rel_path]
+				end
+
+				-- F. Apply Highlight
+				if is_selected then
+					vim.api.nvim_buf_add_highlight(bufnr, ns_id, "ConcatFilesSelected", i - 1, 0, -1)
+
+					-- Icon placement
+					local line_content = vim.api.nvim_buf_get_lines(bufnr, i - 1, i, false)[1]
+					local filename = vim.fn.fnamemodify(node.absolute_path, ":t")
+					local col_start = line_content:find(filename, 1, true) or 0
+					if col_start > 0 then
+						col_start = col_start - 1
+					end
+
+					vim.api.nvim_buf_set_extmark(bufnr, ns_id, i - 1, col_start, {
+						virt_text = { { "✅ ", "ConcatFilesSelectedIcon" } },
+						virt_text_pos = "inline",
+						priority = 100,
+					})
+				end
+			end
+		end
+
+		-- Restore eventignore
+		vim.o.eventignore = old_ei
+	end)
+
+	-- 6. Restore original cursor position
+	vim.api.nvim_win_set_cursor(winid, original_cursor)
+
+	M.is_highlighting = false
+end
+
+-- Function to create highlight groups
+local function setup_highlights()
+	-- Selected file highlight (background)
+	vim.api.nvim_set_hl(0, "ConcatFilesSelected", {
+		bg = "#2d3748", -- Dark blue-gray background
+		fg = "#68d391", -- Light green text
+		bold = true,
+	})
+
+	-- Selected file icon
+	vim.api.nvim_set_hl(0, "ConcatFilesSelectedIcon", {
+		fg = "#68d391", -- Green checkmark
+		bold = true,
+	})
+end
+
+-- Extract keymap setup into a separate function
+local function setup_nvim_tree_keymaps(bufnr)
+	local api = require("nvim-tree.api")
+
+	-- Custom function to toggle file selection
+	local function toggle_file_selection()
+		local node = api.tree.get_node_under_cursor()
+		if not node then
+			vim.notify("⚠️  No file selected", vim.log.levels.WARN)
+			return
+		end
+
+		if node.type ~= "file" then
+			vim.notify("⚠️  Can only select files, not directories", vim.log.levels.WARN)
+			return
+		end
+
+		local file_path = node.absolute_path
+		local cwd = vim.fn.getcwd()
+
+		if file_path:sub(1, #cwd) == cwd then
+			file_path = "." .. file_path:sub(#cwd + 1)
+		end
+
+		if selected_files[file_path] then
+			selected_files[file_path] = nil
+			vim.notify("❌ Removed: " .. vim.fn.fnamemodify(file_path, ":."), vim.log.levels.INFO)
+		else
+			selected_files[file_path] = true
+			vim.notify("✅ Added: " .. vim.fn.fnamemodify(file_path, ":."), vim.log.levels.INFO)
+		end
+
+		M.update_nvim_tree_display()
+	end
+
+	-- Function to select all files in current directory and subdirectories
+	local function select_all_files()
+		local count = 0
+
+		-- Get all files recursively from current working directory
+		local handle = io.popen("find . -type f ! -path '*/.*' ! -path '*/node_modules/*' ! -path '*/.git/*'")
+		if handle then
+			for line in handle:lines() do
+				if not selected_files[line] then
+					selected_files[line] = true
+					count = count + 1
+				end
+			end
+			handle:close()
+		end
+
+		vim.notify("✅ Added " .. count .. " files", vim.log.levels.INFO)
+		M.update_nvim_tree_display()
+	end
+
+	-- Function to deselect all files
+	local function deselect_all_files()
+		local count = vim.tbl_count(selected_files)
+		selected_files = {}
+		vim.notify("❌ Deselected all files (" .. count .. " files)", vim.log.levels.INFO)
+		M.update_nvim_tree_display()
+	end
+
+	-- Function to show selection info
+	local function show_selection_info()
+		local count = vim.tbl_count(selected_files)
+		if count == 0 then
+			vim.notify("📋 No files selected", vim.log.levels.INFO)
+			return
+		end
+
+		local files = vim.tbl_keys(selected_files)
+		table.sort(files)
+
+		local info_lines = {
+			"📋 Selected Files (" .. count .. "):",
+			"",
+		}
+
+		for i, file in ipairs(files) do
+			if i <= 20 then -- Show max 20 files
+				table.insert(info_lines, "  " .. i .. ". " .. file)
+			elseif i == 21 then
+				table.insert(info_lines, "  ... and " .. (count - 20) .. " more files")
+				break
+			end
+		end
+
+		vim.notify(table.concat(info_lines, "\n"), vim.log.levels.INFO)
+	end
+
+	-- Function to go to options menu
+	local function go_to_options()
+		-- Clear highlights before leaving
+		M.clear_nvim_tree_highlights()
+		-- Restore original keymaps
+		M.restore_nvim_tree_keymaps(original_keymaps)
+		M.show_options_menu()
+	end
+
+	-- Function to show help
+	local function show_help()
+		vim.notify(
+			[[
+🌲 NvimTree File Concatenation Controls:
+  <Tab>    - Toggle file selection (✅ = selected)
+  <C-a>    - Select all files in project
+  <C-d>    - Deselect all files
+  <C-i>    - Show selection info
+  <C-o>    - Go to options menu
+  <Enter>  - Go to options menu
+  <C-h>    - Show this help
+  r        - Refresh highlights
+  q        - Cancel and exit
+
+📁 Navigation:
+  Use normal NvimTree navigation (j/k, Enter to expand/collapse)
+  Selected files are highlighted with ✅ and green background
+  Only files can be selected, not directories
+]],
+			vim.log.levels.INFO
+		)
+	end
+
+	-- Function to refresh highlights manually
+	local function refresh_highlights()
+		highlight_selected_files()
+		vim.notify("🔄 Refreshed file selection highlights", vim.log.levels.INFO)
+	end
+
+	-- Set up custom keymaps for file selection
+	local opts = { buffer = bufnr, noremap = true, silent = true }
+
+	vim.keymap.set("n", "<Tab>", toggle_file_selection, opts)
+	vim.keymap.set("n", "<C-a>", select_all_files, opts)
+	vim.keymap.set("n", "<C-d>", deselect_all_files, opts)
+	vim.keymap.set("n", "<C-i>", show_selection_info, opts)
+	vim.keymap.set("n", "<C-o>", go_to_options, opts)
+	vim.keymap.set("n", "<CR>", go_to_options, opts)
+	vim.keymap.set("n", "<C-h>", show_help, opts)
+	vim.keymap.set("n", "?", show_help, opts)
+	vim.keymap.set("n", "r", refresh_highlights, opts)
+	vim.keymap.set("n", "q", function()
+		M.clear_nvim_tree_highlights()
+		M.restore_nvim_tree_keymaps(original_keymaps)
+		M.reset_state()
+	end, opts)
+
+	return {
+		toggle_file_selection = toggle_file_selection,
+		-- ... other functions if needed
+	}
+end
+
+-- NvimTree file picker with multi-select
+local function nvim_tree_file_picker()
+	if not has_nvim_tree() then
+		vim.notify("NvimTree not found, falling back to telescope", vim.log.levels.WARN)
+		return telescope_file_picker()
+	end
+
+	local api = require("nvim-tree.api")
+	local view = require("nvim-tree.view")
+
+	-- Setup custom highlights
+	setup_highlights()
+
+	-- Store original keymaps to restore later
+	local original_keymaps = {}
+
+	-- Open nvim-tree if not already open
+	if not view.is_visible() then
+		api.tree.open()
+	end
+
+	-- Focus nvim-tree
+	api.tree.focus()
+
+	-- Get the nvim-tree buffer
+	local bufnr = vim.api.nvim_get_current_buf()
+
+	-- Store existing keymaps (simplified approach)
+	local existing_keymaps = vim.api.nvim_buf_get_keymap(bufnr, "n")
+	for _, keymap in ipairs(existing_keymaps) do
+		if keymap.lhs then
+			original_keymaps[keymap.lhs] = keymap
+		end
+	end
+
+	-- Setup keymaps using the extracted function
+	setup_nvim_tree_keymaps(bufnr)
+
+	-- Show initial help
+	vim.notify([[
+🌲 NvimTree File Selection Mode Activated!
+
+Use <Tab> to select/deselect files (✅ = selected)
+Use <C-h> or ? for full help
+Use <C-o> or <Enter> when done selecting
+Use 'r' to refresh highlights if needed
+
+Selected: ]] .. vim.tbl_count(selected_files) .. " files", vim.log.levels.INFO)
+
+	-- Update display to show any pre-selected files
+	M.update_nvim_tree_display()
+
+	-- Set up auto-refresh of highlights when nvim-tree refreshes
+	local group = vim.api.nvim_create_augroup("ConcatFilesNvimTree", { clear = true })
+	vim.api.nvim_create_autocmd({ "BufEnter", "CursorMoved" }, {
+		group = group,
+		buffer = bufnr,
+		callback = function()
+			-- Small delay to ensure nvim-tree has updated
+			vim.defer_fn(highlight_selected_files, 50)
+		end,
+	})
+end
+
+-- Function to update nvim-tree display with selection indicators
+function M.update_nvim_tree_display()
+	highlight_selected_files()
+	local count = vim.tbl_count(selected_files)
+
+	-- Update the status line or echo area
+	vim.api.nvim_echo({
+		{ "📁 Selected: " .. count .. " files", "Normal" },
+	}, false, {})
+
+	-- Also update the nvim-tree title if possible
+	local view = require("nvim-tree.view")
+	if view.is_visible() then
+		-- This will be shown in the status area
+		vim.cmd("redraw")
+	end
+end
+
+-- Function to clear nvim-tree highlights
+function M.clear_nvim_tree_highlights()
+	local view = require("nvim-tree.view")
+	if view.is_visible() then
+		local bufnr = view.get_bufnr()
+		if bufnr and vim.api.nvim_buf_is_valid(bufnr) then
+			vim.api.nvim_buf_clear_namespace(bufnr, ns_id, 0, -1)
+		end
+	end
+end
+
+-- Function to restore nvim-tree keymaps
+function M.restore_nvim_tree_keymaps(original_keymaps)
+	local bufnr = vim.api.nvim_get_current_buf()
+
+	-- Clear our custom keymaps
+	local custom_keys = { "<Tab>", "<C-a>", "<C-d>", "<C-i>", "<C-o>", "<C-h>", "?", "q", "r" }
+	for _, key in ipairs(custom_keys) do
+		pcall(vim.keymap.del, "n", key, { buffer = bufnr })
+	end
+
+	-- Clear the autocmd group
+	pcall(vim.api.nvim_del_augroup_by_name, "ConcatFilesNvimTree")
+
+	-- Note: Restoring original keymaps is complex with nvim-tree's dynamic setup
+	-- The plugin will restore its own keymaps when refocused or reopened
+end
+
+function M.return_to_nvim_tree_selection()
+	-- Re-setup the nvim-tree selection mode without clearing existing selections
+	local api = require("nvim-tree.api")
+	local view = require("nvim-tree.view")
+
+	if not view.is_visible() then
+		api.tree.open()
+	end
+
+	api.tree.focus()
+	local bufnr = vim.api.nvim_get_current_buf()
+
+	-- Re-setup keymaps using the same function
+	setup_nvim_tree_keymaps(bufnr)
+
+	-- Re-setup autocmd
+	local group = vim.api.nvim_create_augroup("ConcatFilesNvimTree", { clear = true })
+	vim.api.nvim_create_autocmd({ "BufEnter", "CursorMoved" }, {
+		group = group,
+		buffer = bufnr,
+		callback = function()
+			vim.defer_fn(highlight_selected_files, 50)
+		end,
+	})
+
+	highlight_selected_files()
+	vim.notify(
+		"🌲 Returned to file selection mode. Selected: " .. vim.tbl_count(selected_files) .. " files",
+		vim.log.levels.INFO
+	)
+end
+
+-- Enhanced options menu with back navigation
+function M.show_options_menu()
+	local file_count = vim.tbl_count(selected_files)
+
+	if file_count == 0 then
+		vim.ui.select({ "🔙 Go back to file selection", "❌ Cancel" }, {
+			prompt = "No files selected! What would you like to do?",
+		}, function(choice)
+			if choice and choice:match("Go back") then
+				-- Check if we came from nvim-tree or telescope
+				local view = require("nvim-tree.view")
+				if view.is_visible() then
+					M.return_to_nvim_tree_selection()
+				else
+					telescope_file_picker()
+				end
+			end
+		end)
+		return
+	end
+
+	local options = {
+		string.format("📝 Set output filename (%s)", config.output_file),
+		string.format("🚫 Manage exclude patterns (%d patterns)", #config.exclude_patterns),
+		"📏 Set file size limit"
+			.. (config.max_size and string.format(" (%d KB)", math.floor(config.max_size / 1024)) or " (unlimited)"),
+		string.format("👀 Preview selection (%d files)", file_count),
+		"🔙 Back to file selection",
+		string.format("🚀 Start concatenation (%d files)", file_count),
+		"❌ Cancel",
+	}
+
+	vim.ui.select(options, {
+		prompt = string.format("Concatenation Options (Selected: %d files):", file_count),
+		format_item = function(item)
+			return item
+		end,
+	}, function(choice)
+		if not choice then
+			-- User canceled (pressed escape) - return to selection mode
+			local view = require("nvim-tree.view")
+			if view.is_visible() then
+				M.return_to_nvim_tree_selection()
+			else
+				telescope_file_picker()
+			end
+			return
+		end
+
+		if choice:match("Set output filename") then
+			M.set_output_filename()
+		elseif choice:match("Manage exclude patterns") then
+			M.manage_exclude_patterns()
+		elseif choice:match("Set file size limit") then
+			M.set_size_limit()
+		elseif choice:match("Preview selection") then
+			M.preview_selection()
+		elseif choice:match("Back to file selection") then
+			local view = require("nvim-tree.view")
+			if view.is_visible() then
+				M.return_to_nvim_tree_selection()
+			else
+				telescope_file_picker()
+			end
+		elseif choice:match("Start concatenation") then
+			M.execute_concatenation()
+		else -- Cancel
+			M.reset_state()
+		end
+	end)
+end
+
+-- Set output filename
+function M.set_output_filename()
+	vim.ui.input({
+		prompt = "Output filename: ",
+		default = config.output_file,
+	}, function(input)
+		if input and input ~= "" then
+			config.output_file = input
+			vim.notify("✅ Output filename set to: " .. input, vim.log.levels.INFO)
+		end
+		M.show_options_menu()
+	end)
+end
+
+-- Manage exclude patterns
+function M.manage_exclude_patterns()
+	local current = table.concat(config.exclude_patterns, ", ")
+	vim.ui.input({
+		prompt = "Exclude patterns (comma-separated): ",
+		default = current,
+	}, function(input)
+		if input then
+			config.exclude_patterns = {}
+			for pattern in input:gmatch("[^,]+") do
+				table.insert(config.exclude_patterns, vim.trim(pattern))
+			end
+			vim.notify("✅ Exclude patterns updated", vim.log.levels.INFO)
+		end
+		M.show_options_menu()
+	end)
+end
+
+-- Set file size limit
+function M.set_size_limit()
+	vim.ui.input({
+		prompt = "Max file size in KB (0 for no limit): ",
+		default = config.max_size and tostring(math.floor(config.max_size / 1024)) or "0",
+	}, function(input)
+		if input then
+			local kb = tonumber(input) or 0
+			config.max_size = kb > 0 and (kb * 1024) or nil
+			local msg = config.max_size and ("✅ Size limit set to: " .. kb .. " KB") or "✅ Size limit removed"
+			vim.notify(msg, vim.log.levels.INFO)
+		end
+		M.show_options_menu()
+	end)
+end
+
+-- Preview selection
+function M.preview_selection()
+	local files = vim.tbl_keys(selected_files)
+	table.sort(files)
+
+	local lines = {
+		"# 📁 Concatenation Preview",
+		"",
+		string.format("**Selected Files:** %d", #files),
+		string.format("**Output File:** %s", config.output_file),
+		string.format(
+			"**Size Limit:** %s",
+			config.max_size and (math.floor(config.max_size / 1024) .. " KB") or "unlimited"
+		),
+		string.format("**Exclude Patterns:** %s", table.concat(config.exclude_patterns, ", ")),
+		"",
+		"## 📋 File List:",
+		"",
+	}
+
+	local total_size = 0
+	for i, file in ipairs(files) do
+		local size = vim.fn.getfsize(file)
+		total_size = total_size + (size > 0 and size or 0)
+		local size_str = size > 0 and string.format(" (%d bytes)", size) or " (unknown size)"
+		table.insert(lines, string.format("%d. `%s`%s", i, file, size_str))
+	end
+
+	table.insert(lines, "")
+	table.insert(lines, string.format("**Total Size:** ~%d KB", math.floor(total_size / 1024)))
+	table.insert(lines, "")
+	table.insert(lines, "---")
+	table.insert(lines, "")
+	table.insert(lines, "**Controls:**")
+	table.insert(lines, "- `q` or `<Esc>` - Go back to options")
+	table.insert(lines, "- `<Enter>` - Start concatenation")
+	table.insert(lines, "- `e` - Edit selection")
+
+	-- Create preview buffer
+	local buf = vim.api.nvim_create_buf(false, true)
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+	vim.api.nvim_buf_set_option(buf, "modifiable", false)
+	vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
+
+	-- Calculate window size
+	local width = math.min(100, vim.o.columns - 4)
+	local height = math.min(#lines + 4, vim.o.lines - 4)
+
+	-- Open floating window
+	local win = vim.api.nvim_open_win(buf, true, {
+		relative = "editor",
+		width = width,
+		height = height,
+		col = (vim.o.columns - width) / 2,
+		row = (vim.o.lines - height) / 2,
+		style = "minimal",
+		border = "rounded",
+		title = " 📋 Concatenation Preview ",
+		title_pos = "center",
+	})
+
+	-- Add keymaps for the preview buffer
+	local opts = { buffer = buf, noremap = true, silent = true }
+	vim.keymap.set("n", "q", function()
+		vim.api.nvim_win_close(win, true)
+		M.show_options_menu()
+	end, opts)
+
+	vim.keymap.set("n", "<Esc>", function()
+		vim.api.nvim_win_close(win, true)
+		M.show_options_menu()
+	end, opts)
+
+	vim.keymap.set("n", "<CR>", function()
+		vim.api.nvim_win_close(win, true)
+		M.execute_concatenation()
+	end, opts)
+
+	vim.keymap.set("n", "e", function()
+		vim.api.nvim_win_close(win, true)
+		telescope_file_picker()
+	end, opts)
+end
+
+-- Execute concatenation
+function M.execute_concatenation()
+	local files = vim.tbl_keys(selected_files)
+
+	if #files == 0 then
+		vim.notify("No files selected!", vim.log.levels.WARN)
+		return
+	end
+
+	local content = {
+		"# 📁 File Concatenation Report",
+		"",
+		"**Generated:** " .. os.date("%Y-%m-%d %H:%M:%S"),
+		"**Total Files:** " .. #files,
+		"**Output:** " .. config.output_file,
+		"",
+		"---",
+		"",
+	}
+
+	local processed = 0
+	local skipped = 0
+
+	-- Show progress
+	vim.notify("🔄 Processing " .. #files .. " files...", vim.log.levels.INFO)
+
+	for _, file_path in ipairs(files) do
+		-- Check if file should be excluded
+		local should_skip = false
+		for _, pattern in ipairs(config.exclude_patterns) do
+			if file_path:match(pattern) then
+				should_skip = true
+				break
+			end
+		end
+
+		if should_skip then
+			skipped = skipped + 1
+		else
+			-- Check file size
+			if config.max_size then
+				local size = vim.fn.getfsize(file_path)
+				if size > config.max_size then
+					vim.notify("⏭️  Skipping " .. file_path .. ": exceeds size limit", vim.log.levels.WARN)
+					skipped = skipped + 1
+				else
+					-- Read and add file content
+					local file_lines = {}
+					local f = io.open(file_path, "r")
+					if f then
+						for line in f:lines() do
+							table.insert(file_lines, line)
+						end
+						f:close()
+
+						-- Add file section
+						table.insert(content, "## 📄 " .. file_path)
+						table.insert(content, "")
+						-- Detect file type for syntax highlighting
+						local ext = file_path:match("%.([^%.]+)$")
+						local lang = ext and ext or ""
+						table.insert(content, "```" .. lang)
+						vim.list_extend(content, file_lines)
+						table.insert(content, "```")
+						table.insert(content, "")
+
+						processed = processed + 1
+					else
+						vim.notify("❌ Failed to read: " .. file_path, vim.log.levels.ERROR)
+						skipped = skipped + 1
+					end
+				end
+			else
+				-- Read and add file content (no size limit)
+				local file_lines = {}
+				local f = io.open(file_path, "r")
+				if f then
+					for line in f:lines() do
+						table.insert(file_lines, line)
+					end
+					f:close()
+
+					-- Add file section
+					table.insert(content, "## 📄 " .. file_path)
+					table.insert(content, "")
+					-- Detect file type for syntax highlighting
+					local ext = file_path:match("%.([^%.]+)$")
+					local lang = ext and ext or ""
+					table.insert(content, "```" .. lang)
+					vim.list_extend(content, file_lines)
+					table.insert(content, "```")
+					table.insert(content, "")
+
+					processed = processed + 1
+				else
+					vim.notify("❌ Failed to read: " .. file_path, vim.log.levels.ERROR)
+					skipped = skipped + 1
+				end
+			end
+		end
+	end
+
+	-- Write output
+	local f = io.open(config.output_file, "w")
+	if f then
+		f:write(table.concat(content, "\n"))
+		f:close()
+
+		vim.notify(
+			string.format(
+				"✅ Concatenation complete!\n📄 Processed: %d files\n⏭️  Skipped: %d files\n📁 Output: %s",
+				processed,
+				skipped,
+				config.output_file
+			),
+			vim.log.levels.INFO
+		)
+
+		-- Ask to open file
+		vim.ui.select({ "📖 Open file", "📁 Open in split", "❌ Close" }, {
+			prompt = "Concatenation complete! What would you like to do?",
+		}, function(choice)
+			if choice and choice:match("Open file") then
+				vim.cmd("edit " .. config.output_file)
+			elseif choice and choice:match("Open in split") then
+				vim.cmd("vsplit " .. config.output_file)
+			end
+		end)
+	else
+		vim.notify("❌ Failed to write: " .. config.output_file, vim.log.levels.ERROR)
+	end
+
+	M.reset_state()
+end
+
+-- Reset state
+function M.reset_state()
+	selected_files = {}
+	M.clear_nvim_tree_highlights()
+end
+
+-- Fallback for when Telescope is not available
+function M.fallback_picker()
+	vim.notify("Using fallback file picker (install Telescope for better experience)", vim.log.levels.INFO)
+
+	local files = {}
+	local handle = io.popen("find . -type f ! -path '*/.*' ! -path '*/node_modules/*' | head -50")
+	if handle then
+		for line in handle:lines() do
+			table.insert(files, line)
+		end
+		handle:close()
+	end
+
+	if #files == 0 then
+		vim.notify("No files found", vim.log.levels.WARN)
+		return
+	end
+
+	M.select_files_recursive(files, 1)
+end
+
+function M.select_files_recursive(files, index)
+	if index > #files then
+		M.show_options_menu()
+		return
+	end
+
+	local file = files[index]
+	local selected_count = vim.tbl_count(selected_files)
+	local status = selected_files[file] and "✅ SELECTED" or "⬜ Not selected"
+
+	vim.ui.select({
+		string.format("✅ Include (%s)", status),
+		"⏭️  Skip this file",
+		"🎯 Select all remaining",
+		string.format("✅ Done selecting (%d selected)", selected_count),
+		"❌ Cancel",
+	}, {
+		prompt = string.format("File %d/%d: %s", index, #files, file),
+	}, function(choice)
+		if not choice then
+			return
+		end
+
+		if choice:match("Include") then
+			selected_files[file] = true
+			vim.notify("✅ Added: " .. file)
+			M.select_files_recursive(files, index + 1)
+		elseif choice:match("Skip") then
+			M.select_files_recursive(files, index + 1)
+		elseif choice:match("Select all remaining") then
+			for i = index, #files do
+				selected_files[files[i]] = true
+			end
+			vim.notify("✅ Added " .. (#files - index + 1) .. " remaining files")
+			M.show_options_menu()
+		elseif choice:match("Done selecting") then
+			M.show_options_menu()
+		else -- Cancel
+			M.reset_state()
+		end
+	end)
+end
+
+function M.setup()
+	vim.api.nvim_create_user_command("ConcatFiles", function()
+		M.reset_state()
+		if has_telescope() then
+			telescope_file_picker()
+		else
+			M.fallback_picker()
+		end
+	end, { desc = "Interactive file concatenation with multi-select" })
+
+	vim.api.nvim_create_user_command("ConcatFilesTree", function()
+		M.reset_state()
+		nvim_tree_file_picker()
+	end, { desc = "Interactive file concatenation using NvimTree" })
+
+	vim.keymap.set("n", "<leader>cf", ":ConcatFiles<CR>", {
+		noremap = true,
+		silent = true,
+		desc = "Interactive file concatenation (Telescope)",
+	})
+
+	vim.keymap.set("n", "<leader>cft", ":ConcatFilesTree<CR>", {
+		noremap = true,
+		silent = true,
+		desc = "Interactive file concatenation (NvimTree)",
+	})
+
+	-- Additional keymaps for quick access
+	vim.keymap.set("n", "<leader>cF", function()
+		M.reset_state()
+		-- Quick mode: select all files and go to options
+		local files = {}
+		local handle = io.popen("find . -type f ! -path '*/.*' ! -path '*/node_modules/*' ! -path '*/.git/*'")
+		if handle then
+			for line in handle:lines() do
+				selected_files[line] = true
+				table.insert(files, line)
+			end
+			handle:close()
+		end
+		vim.notify("✅ Auto-selected " .. #files .. " files")
+		M.show_options_menu()
+	end, {
+		noremap = true,
+		silent = true,
+		desc = "Quick concatenation (select all files)",
+	})
+
+	-- Setup highlights on plugin load
+	setup_highlights()
+
+	-- vim.notify(
+	-- "📁 Enhanced file concatenation plugin loaded!\n🔧 Commands: :ConcatFiles, <leader>cf (Telescope), <leader>cft (NvimTree), <leader>cF (quick)",
+	-- vim.log.levels.INFO
+	-- )
+end
+
+return M
+```

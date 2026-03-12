@@ -103,6 +103,7 @@ local function get_clipboard_backend()
 	return nil
 end
 
+
 vim.g.clipboard = get_clipboard_backend() or vim.g.clipboard
 
 -- Bonus: make yy/dd/p always use system clipboard (this is the modern way)

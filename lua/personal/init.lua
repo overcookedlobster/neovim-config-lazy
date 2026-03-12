@@ -47,6 +47,8 @@ function M.setup()
   safe_setup("personal.concat")
   safe_setup("personal.spell")
 
+  -- Add this line:
+  safe_setup("personal.sv_diagram")
   -- vim.notify("Personal modules setup complete")
 end
 
