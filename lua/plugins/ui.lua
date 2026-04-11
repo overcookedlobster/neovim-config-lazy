@@ -335,100 +335,26 @@ return {
 	{
 		"folke/noice.nvim",
 		event = "VeryLazy",
-		dependencies = {
-			"MunifTanjim/nui.nvim",
-			"rcarriga/nvim-notify",
+		dependencies = { "MunifTanjim/nui.nvim" },
+		opts = {
+			lsp = {
+				override = {
+					["vim.lsp.util.convert_input_to_markdown_lines"] = true,
+					["vim.lsp.util.stylize_markdown"] = true,
+					["cmp.entry.get_documentation"] = true,
+				},
+			},
+			presets = {
+				bottom_search = true,
+				command_palette = true,
+				long_message_to_split = true,
+			},
+			-- Keep it fast by disabling what you don't use
+			messages = { enabled = false },
+			notify = { enabled = false },
+			popupmenu = { enabled = true },
 		},
-		config = function()
-			require("noice").setup({
-				lsp = {
-					-- Override markdown rendering so that **cmp** and other plugins use **Treesitter**
-					override = {
-						["vim.lsp.util.convert_input_to_markdown_lines"] = true,
-						["vim.lsp.util.stylize_markdown"] = true,
-						["cmp.entry.get_documentation"] = true,
-					},
-				},
-				-- You can enable a preset for easier configuration
-				presets = {
-					bottom_search = true, -- Use a classic bottom cmdline for search
-					command_palette = true, -- Position the cmdline and popupmenu together
-					long_message_to_split = true, -- Long messages will be sent to a split
-					inc_rename = false, -- Enables an input dialog for inc-rename.nvim
-					lsp_doc_border = false, -- Add a border to hover docs and signature help
-				},
-				-- Configure the cmdline to appear at the top
-				cmdline = {
-					enabled = true, -- Enable cmdline UI
-					view = "cmdline_popup", -- View for rendering the cmdline
-					opts = {}, -- Global options for the cmdline
-					format = {
-						-- Conceal the long command line text
-						cmdline = { pattern = "^:", icon = "", lang = "vim" },
-						search_down = { kind = "search", pattern = "^/", icon = " ", lang = "regex" },
-						search_up = { kind = "search", pattern = "^%?", icon = " ", lang = "regex" },
-						filter = { pattern = "^:%s*!", icon = "$", lang = "bash" },
-						lua = { pattern = { "^:%s*lua%s+", "^:%s*lua%s*=%s*", "^:%s*=%s*" }, icon = "", lang = "lua" },
-						help = { pattern = "^:%s*he?l?p?%s+", icon = "" },
-						input = {}, -- Used by input()
-					},
-				},
-				messages = {
-					-- NOTE: If you enable messages, then the cmdline is enabled automatically.
-					-- This is a current Neovim limitation.
-					enabled = false, -- Disable noice messages to let nvim-notify handle notifications
-					view = "notify", -- Default view for messages
-					view_error = "notify", -- View for errors
-					view_warn = "notify", -- View for warnings
-					view_history = "messages", -- View for :messages
-					view_search = "virtualtext", -- View for search count messages
-				},
-				popupmenu = {
-					enabled = true, -- Enable popupmenu UI
-					backend = "nui", -- Backend to use to show regular cmdline completions
-					kind_icons = {}, -- Set to `false` to disable icons
-				},
-				-- Disable noice notify to prevent interference with nvim-notify
-				notify = {
-					enabled = false, -- Disable noice notify completely
-				},
-				-- Configure views
-				views = {
-					cmdline_popup = {
-						position = {
-							row = 5,
-							col = "50%",
-						},
-						size = {
-							width = 60,
-							height = "auto",
-						},
-					},
-					popupmenu = {
-						relative = "editor",
-						position = {
-							row = 8,
-							col = "50%",
-						},
-						size = {
-							width = 60,
-							height = 10,
-						},
-						border = {
-							style = "rounded",
-							padding = { 0, 1 },
-						},
-						win_options = {
-							winhighlight = { Normal = "Normal", FloatBorder = "DiagnosticInfo" },
-						},
-					},
-				},
-			})
-
-					-- Use Noice for notifications
-					vim.notify = require("noice").notify
-		end,
-	},
+	}, -- This comma is vital if there are more plugins following this block!
 
 	-- Trouble: Better diagnostics window
 	{
@@ -786,7 +712,6 @@ return {
 			})
 		end,
 	},
-
 
 	{
 		"EdenEast/nightfox.nvim",

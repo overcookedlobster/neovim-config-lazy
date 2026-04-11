@@ -381,8 +381,9 @@ return {
 		"yetone/avante.nvim",
 		event = "VeryLazy",
 		version = false, -- Never set this value to "*"! Never!
-		debug = true,
+		debug = false,
 		opts = {
+			hints = { enabled = false },
 			-- add any opts here
 			-- for example
 			instructions_file = "avante.md",
@@ -510,6 +511,19 @@ return {
 						max_completion_tokens = 10000,
 						reasoning_effort = "medium",
 					},
+				},
+				moonshot = {
+					endpoint = "https://api.moonshot.ai/v1",
+					model = "kimi-k2-0905-preview",
+					-- timeout = 30000, -- Timeout in milliseconds
+					-- extra_request_body = {
+					--   temperature = 0.75,
+					--   max_tokens = 32768,
+					-- },
+					-- thinking = {
+					--   type = "enabled";
+					--   budget_tokens = 2048;
+					-- }
 				},
 			},
 			-- MCPHub integration
