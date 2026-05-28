@@ -67,6 +67,21 @@ end
 -- Smart clipboard that works on X11 AND Wayland (Niri, Hyprland, etc.)
 -- Automatically picks the right backend — no more manual changes when switching!
 local function get_clipboard_backend()
+    -- 1. WSL Check first (Overrides Wayland/X11)
+  if vim.fn.has("wsl") == 1 then
+        return {
+            name = "win32yank-wsl",
+            copy = {
+                ["+"] = "win32yank.exe -i --crlf",
+                ["*"] = "win32yank.exe -i --crlf",
+            },
+            paste = {
+                ["+"] = "win32yank.exe -o --lf",
+                ["*"] = "win32yank.exe -o --lf",
+            },
+            cache_enabled = 0,
+        }
+    end
 	-- Wayland first (most people are here in 2025)
 	if os.getenv("WAYLAND_DISPLAY") or os.getenv("HYPRLAND_INSTANCE_SIGNATURE") then
 		return {
