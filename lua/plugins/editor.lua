@@ -41,34 +41,35 @@ return {
 	},
 
 	-- Comment.nvim: Easy commenting
-	{
-		"numToStr/Comment.nvim",
-		config = function()
-			require("Comment").setup({
-				padding = true,
-				sticky = true,
-				ignore = nil,
-				toggler = {
-					line = "gll",
-					block = "gcc",
-				},
-				opleader = {
-					line = "gl",
-					block = "gc",
-				},
-				extra = {
-					above = "gcO",
-					below = "gco",
-					eol = "gcA",
-				},
-				mappings = {
-					basic = true,
-					extra = true,
-					extended = false,
-				},
-			})
-		end,
-	},
+	-- {
+	-- 	"numToStr/Comment.nvim",
+ --    commit = "9386e87", -- Pulls faergeek's fix
+	-- 	config = function()
+	-- 		require("Comment").setup({
+	-- 			padding = true,
+	-- 			sticky = true,
+	-- 			-- ignore = nil,
+	-- 			toggler = {
+	-- 				line = "gll",
+	-- 				block = "gcc",
+	-- 			},
+	-- 			opleader = {
+	-- 				line = "gl",
+	-- 				block = "gc",
+	-- 			},
+	-- 			extra = {
+	-- 				above = "gcO",
+	-- 				below = "gco",
+	-- 				eol = "gcA",
+	-- 			},
+	-- 			mappings = {
+	-- 				basic = true,
+	-- 				extra = true,
+	-- 				extended = false,
+	-- 			},
+	-- 		})
+	-- 	end,
+	-- },
 
 	-- Surround: Handle surrounding delimiters
 	{

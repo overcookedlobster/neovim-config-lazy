@@ -2,7 +2,7 @@
 -- Main entry point for Neovim configuration
 -- Add this to your init.lua (at the very top)
 vim.g.jukit_enable_textcell_bg = 0 -- Disable the feature causing errors
-vim.g.jukit_text_syntax_file = vim.fn.expand("$VIMRUNTIME/syntax/text.vim")
+-- vim.g.jukit_text_syntax_file = vim.fn.expand("$VIMRUNTIME/syntax/text.vim")
 -- Set leader keys early to ensure consistent behavior
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"

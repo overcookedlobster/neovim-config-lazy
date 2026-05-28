@@ -2,7 +2,9 @@
 return {
 	"nvim-treesitter/nvim-treesitter",
 	build = ":TSUpdate",
-	priority = 600, -- Load before most plugins but after critical ones
+	lazy = false,
+  branch = "main", -- CRITICAL: Switch to main for Nvim 0.12
+	-- priority = 600, -- Load before most plugins but after critical ones
 	config = function()
 		-- Use git for more reliable parser installation
 		require("nvim-treesitter.install").prefer_git = true

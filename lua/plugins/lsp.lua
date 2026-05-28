@@ -82,13 +82,21 @@ return {
         return vim.lsp.handlers["textDocument/definition"](err, safe_result, ctx, config)
       end
 
-      -- LSP handlers configuration
-      local handlers = {
-        ["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "rounded" }),
-        ["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = "rounded" }),
-        -- Add our new safe handler here:
-        ["textDocument/definition"] = safe_definition_handler,
-      }
+        -- LSP handlers configuration
+        local handlers = {
+          ["textDocument/hover"] = function(err, result, ctx, config)
+            return vim.lsp.handlers.hover(err, result, ctx, vim.tbl_deep_extend("force", config or {}, {
+              border = "rounded",
+            }))
+          end,
+          ["textDocument/signatureHelp"] = function(err, result, ctx, config)
+            return vim.lsp.handlers.signature_help(err, result, ctx, vim.tbl_deep_extend("force", config or {}, {
+              border = "rounded",
+            }))
+          end,
+          -- Add our new safe handler here:
+          ["textDocument/definition"] = safe_definition_handler,
+        }
 
       -- Set diagnostic signs using the modern API
       local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
@@ -121,7 +129,7 @@ return {
 
       -- Global LSP on_attach function
       local on_attach = function(client, bufnr)
-        if client.name == "slangd" then
+        if client.name == "slang-server" then
           local orig_handler = client.handlers["textDocument/definition"]
               or vim.lsp.handlers["textDocument/definition"]
           client.handlers["textDocument/definition"] = function(err, result, ctx, config)
