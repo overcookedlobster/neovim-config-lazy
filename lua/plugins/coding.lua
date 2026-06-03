@@ -514,16 +514,16 @@ return {
 				},
 				moonshot = {
 					endpoint = "https://api.moonshot.ai/v1",
-					model = "kimi-k2-0905-preview",
+					model = "kimi-k2.6",
 					-- timeout = 30000, -- Timeout in milliseconds
-					-- extra_request_body = {
-					--   temperature = 0.75,
-					--   max_tokens = 32768,
-					-- },
-					-- thinking = {
-					--   type = "enabled";
-					--   budget_tokens = 2048;
-					-- }
+					extra_request_body = {
+					  temperature = 1,
+					  max_tokens = 32768,
+					},
+					thinking = {
+					  type = "enabled";
+					  budget_tokens = 2048;
+					}
 				},
 			},
 			-- MCPHub integration

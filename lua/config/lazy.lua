@@ -29,6 +29,7 @@ vim.opt.rtp:prepend(lazypath)
 require("lazy").setup({
 	spec = {
 		-- Import plugin specifications from separate files
+    { "nvim-treesitter/nvim-treesitter", branch = "main" },
 		{ import = "plugins.ui" }, -- UI-related plugins
 		{ import = "plugins.editor" }, -- Editor enhancement plugins
 		{ import = "plugins.coding" }, -- Coding-related plugins
