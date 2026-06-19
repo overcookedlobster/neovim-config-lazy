@@ -387,8 +387,8 @@ return {
 			-- add any opts here
 			-- for example
 			instructions_file = "avante.md",
-			provider = "xai", -- Changed from copilot to igpt since copilot is disabled
-			auto_suggestions_provider = "xai", -- Changed from copilot to igpt
+			provider = "moonshot", -- Changed from copilot to igpt since copilot is disabled
+			auto_suggestions_provider = "moonshot", -- Changed from copilot to igpt
 			-- RAG Service Configuration
 			rag_service = {
 				enabled = false, -- Enable RAG service
@@ -514,7 +514,7 @@ return {
 				},
 				moonshot = {
 					endpoint = "https://api.moonshot.ai/v1",
-					model = "kimi-k2.6",
+					model = "kimi-k2.7",
 					-- timeout = 30000, -- Timeout in milliseconds
 					extra_request_body = {
 					  temperature = 1,
