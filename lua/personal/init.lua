@@ -49,6 +49,7 @@ function M.setup()
 
   -- Add this line:
   safe_setup("personal.sv_diagram")
+  safe_setup("personal.tts")
   -- vim.notify("Personal modules setup complete")
 end
 
