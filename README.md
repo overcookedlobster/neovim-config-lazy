@@ -39,6 +39,7 @@ A modern Neovim configuration built with lazy.nvim, featuring LazyVim-style UI e
 - **Multiple Cursors**: vim-visual-multi for bulk editing
 - **Surround Operations**: Easy text object manipulation
 - **Comment Toggling**: Smart commenting with Comment.nvim
+- **Inline Translation**: Language detection with popup translations (Korean, Japanese, Chinese, ... → English)
 
 ## Installation
 
@@ -86,6 +87,11 @@ A modern Neovim configuration built with lazy.nvim, featuring LazyVim-style UI e
 - Rainbow brackets color-code nested parentheses
 - Notifications appear in upper-right corner
 - Command line appears at top when typing `:`
+
+### Translation
+- `<Leader>tv` - Translate the visual selection (Korean, Japanese, Chinese, ... → English popup)
+- `<Leader>tw` - Translate the word under the cursor (non-Latin scripts → English popup)
+- Latin/English text is detected and ignored automatically
 
 ## Configuration Structure
 

@@ -36,6 +36,7 @@ require("lazy").setup({
 		{ import = "plugins.lsp" }, -- LSP configurations
 		{ import = "plugins.tex" }, -- LaTeX tools
 		{ import = "plugins.tools" }, -- Utilities and tools
+		{ import = "plugins.translator" }, -- Translation popups
 		{ import = "plugins.filetree" }, -- File explorer
 	},
 	defaults = {

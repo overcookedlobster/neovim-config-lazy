@@ -576,6 +576,15 @@ end, "Spell: Show spelling suggestions")
 -- Thesaurus operations
 desc_map("n", "<Leader>zr", ":ThesaurusQueryReplaceCurrentWord<CR>", "Thesaurus: Replace current word with synonym")
 
+-- Translation (vim-translator): foreign text (Korean, Japanese, Chinese, ...) -> English popup
+-- Latin/English text is detected and ignored.
+desc_map("n", "<Leader>tw", function()
+	require("utils.translate").word()
+end, "Translate: Word under cursor to English")
+desc_map("x", "<Leader>tv", function()
+	require("utils.translate").selection()
+end, "Translate: Visual selection to English")
+
 -- ============================================================================
 -- ADDITIONAL UNMAPPED PLUGIN FUNCTIONS
 -- ============================================================================

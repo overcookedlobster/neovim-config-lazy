@@ -78,6 +78,7 @@
   "vim-matchup": { "branch": "master", "commit": "a2d618496223386844acb5a6763cfc3cc1357af1" },
   "vim-rooter": { "branch": "master", "commit": "51402fb77c4d6ae94994e37dc7ca13bec8f4afcc" },
   "vim-surround": { "branch": "master", "commit": "3d188ed2113431cf8dac77be61b842acb64433d9" },
+  "vim-translator": { "branch": "master", "commit": "6f0639c6d471a3a90ac19db96e1e379c030f74e3" },
   "vim-visual-multi": { "branch": "master", "commit": "a6975e7c1ee157615bbc80fc25e4392f71c344d4" },
   "vimtex": { "branch": "master", "commit": "24e229914182ff301496a3e2c4214b28c4928d3f" },
   "vscode.nvim": { "branch": "main", "commit": "aa1102a7e15195c9cca22730b09224a7f7745ba8" },
