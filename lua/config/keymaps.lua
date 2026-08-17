@@ -585,6 +585,36 @@ desc_map("x", "<Leader>tv", function()
 	require("utils.translate").selection()
 end, "Translate: Visual selection to English")
 
+-- Right-click context menu: the native PopUp menu (mousemodel=popup_setpos)
+-- extended with TTS speak + autotranslate entries. The menu is rebuilt so the
+-- new items sit on top; the runtime default entries are mirrored below (keep
+-- in sync with vim/_core/defaults.lua "Default menus").
+vim.cmd([[
+  silent! aunmenu PopUp
+  vnoremenu PopUp.🔊\ Speak\ Selection     <Cmd>lua require("personal.tts").speak_selection_or_word()<CR>
+  vnoremenu PopUp.🌐\ Translate\ Selection <Cmd>lua require("utils.translate").selection()<CR>
+  nnoremenu PopUp.🔊\ Speak\ Word          <Cmd>lua require("personal.tts").speak_current_word()<CR>
+  nnoremenu PopUp.🌐\ Translate\ Word      <Cmd>lua require("utils.translate").word()<CR>
+  anoremenu PopUp.-1-                      <Nop>
+  vnoremenu PopUp.Cut                      "+x
+  vnoremenu PopUp.Copy                     "+y
+  anoremenu PopUp.Paste                    "+gP
+  vnoremenu PopUp.Paste                    "+P
+  vnoremenu PopUp.Delete                   "_x
+  nnoremenu PopUp.Select\ All              ggVG
+  vnoremenu PopUp.Select\ All              gg0oG$
+  inoremenu PopUp.Select\ All              <C-Home><C-O>VG
+  anoremenu PopUp.-2-                      <Nop>
+  anoremenu PopUp.Inspect                  <Cmd>Inspect<CR>
+  anoremenu PopUp.Go\ to\ definition       <Cmd>lua vim.lsp.buf.definition()<CR>
+  anoremenu PopUp.Show\ Diagnostics        <Cmd>lua vim.diagnostic.open_float()<CR>
+  anoremenu PopUp.Show\ All\ Diagnostics   <Cmd>lua vim.diagnostic.setqflist()<CR>
+  anoremenu PopUp.Configure\ Diagnostics   <Cmd>help vim.diagnostic.config()<CR>
+  anoremenu PopUp.Open\ in\ web\ browser   gx
+  anoremenu PopUp.-3-                      <Nop>
+  anoremenu PopUp.How-to\ disable\ mouse   <Cmd>help disable-mouse<CR>
+]])
+
 -- ============================================================================
 -- ADDITIONAL UNMAPPED PLUGIN FUNCTIONS
 -- ============================================================================
