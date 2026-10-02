@@ -493,36 +493,68 @@ return {
         verilog = { "verilator" },
       }
 
-      -- Configure verilator linter with custom settings
+      -- Configure verilator linter with cross-file module resolution.
+      -- Without `-y`/`+libext`, verilator treats the buffer as a closed unit and
+      -- errors with MODMISSING when a sibling file defines an instantiated module.
       lint.linters.verilator = {
         cmd = "verilator",
         stdin = false,
         args = {
           "--lint-only",
           "-Wall",
-          "-I" .. (os.getenv("UVM_HOME") or "") .. "/src",
+          -- Resolve modules defined in files next to the buffer (alu.sv, pkgs…).
+          "-y",
           function()
-            return vim.api.nvim_buf_get_name(0)
+            return vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p:h")
+          end,
+          -- Library extensions verilator searches when it sees `foo` but not `foo.v`.
+          "+libext+.sv+.svh+.v+.vh",
+          -- Last arg must stay last: nvim-lint builds the list with tbl_map and a
+          -- nil return truncates everything after it, so keep the optional UVM
+          -- include at the tail (harmless when UVM_HOME is unset or invalid).
+          function()
+            local uvm = os.getenv("UVM_HOME")
+            if not uvm or uvm == "" then
+              return nil
+            end
+            local dir = vim.fn.expand(uvm) -- expand `~`; verilator spawns without a shell
+            if not dir:match("/src$") then
+              dir = dir .. "/src"
+            end
+            if vim.fn.isdirectory(dir) == 0 then
+              return nil
+            end
+            return "-I" .. dir
           end,
         },
         stream = "stderr",
         ignore_exitcode = true,
         parser = function(output, bufnr)
           local diagnostics = {}
-          -- Parse verilator output format
+          local bufpath = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ":p")
+          -- verilator emits `%Error-CODE: file:l:c: msg` / `%Warning-CODE: ...`.
           for line in output:gmatch("[^\n]+") do
-            local file, line_num, col, severity, message = line:match("([^:]+):(%d+):(%d+): ([^:]+): (.+)")
-            if file and line_num and message then
-              local diagnostic = {
+            local kind, file, line_num, col, message = line:match("^%%([%a]+)%-%w+:%s+([^:]+):(%d+):(%d+):%s+(.+)$")
+            if not kind then
+              kind, file, line_num, col, message = line:match("^%%([%a]+):%s+([^:]+):(%d+):(%d+):%s+(.+)$")
+            end
+            -- nvim-lint attributes every diagnostic to the current buffer, so drop
+            -- diagnostics verilator reports for other files (e.g. alu.sv warnings
+            -- surfaced while elaborating tb_top.sv) instead of misplacing them.
+            if kind and file and line_num and vim.fn.fnamemodify(file, ":p") == bufpath then
+              local severity = vim.diagnostic.severity.INFO
+              if kind:lower():match("error") then
+                severity = vim.diagnostic.severity.ERROR
+              elseif kind:lower():match("warn") then
+                severity = vim.diagnostic.severity.WARN
+              end
+              table.insert(diagnostics, {
                 lnum = tonumber(line_num) - 1,
-                col = tonumber(col) - 1 or 0,
+                col = (tonumber(col) or 1) - 1,
                 message = message,
-                severity = severity:lower():match("error") and vim.diagnostic.severity.ERROR
-                    or severity:lower():match("warning") and vim.diagnostic.severity.WARN
-                    or vim.diagnostic.severity.INFO,
+                severity = severity,
                 source = "verilator",
-              }
-              table.insert(diagnostics, diagnostic)
+              })
             end
           end
           return diagnostics
